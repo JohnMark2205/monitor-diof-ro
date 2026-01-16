@@ -29,19 +29,20 @@ st.markdown("""
     <style>
     .block-container { padding-top: 2rem; padding-bottom: 8rem; }
 
-    /* --- CORREÇÃO DA LOGO (V11 - Altura Automática) --- */
+    /* --- CORREÇÃO DA LOGO (V12 - Object-Fit Contain) --- */
     .logo-container {
         display: flex;
         justify-content: center;
         align-items: center;
         width: 100%;
+        height: 120px; /* Altura fixa para o cabeçalho */
         margin-bottom: 10px;
-        /* Sem altura fixa, deixa a imagem definir */
+        overflow: hidden; /* Garante que nada saia do container */
     }
     .logo-container img {
-        max-width: 200px; /* Largura máxima controlada */
-        height: auto;     /* Altura se ajusta para não cortar */
-        display: block;
+        height: 100%;       /* Ocupa toda a altura do container */
+        width: auto;        /* Largura se ajusta proporcionalmente */
+        object-fit: contain;/* O PULO DO GATO: Faz a imagem caber sem cortar */
     }
     /* --- FIM DA CORREÇÃO DA LOGO --- */
     
