@@ -2,8 +2,10 @@ name: Monitoramento Horário DIOF
 
 on:
   schedule:
-    - cron: '0 * * * *'
-  workflow_dispatch:
+    # A cada 30 minutos, das 7h às 19h (Horário UTC aprox para cobrir horário comercial do Acre)
+    # Segunda a Sexta (1-5)
+    - cron: '*/30 10-22 * * 1-5'
+  workflow_dispatch: 
 
 permissions:
   contents: write
