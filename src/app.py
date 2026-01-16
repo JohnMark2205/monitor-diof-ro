@@ -1,6 +1,7 @@
 import streamlit as st
 import json
 import os
+import base64
 from datetime import datetime
 import requests
 import time
@@ -28,7 +29,25 @@ st.markdown("""
     <style>
     .block-container { padding-top: 2rem; padding-bottom: 8rem; }
     
-    /* REMOVIDO CSS DA LOGO (Usaremos st.image nativo) */
+    /* --- NOVA CORREÇÃO DA LOGO (V14 - Flexbox Robusto) --- */
+    .logo-container-v14 {
+        display: flex;
+        justify-content: center; /* Centraliza horizontalmente */
+        align-items: center;
+        width: 100%;
+        margin-bottom: 20px;
+        /* NENHUMA altura fixa aqui */
+    }
+
+    .logo-img-v14 {
+        max-width: 250px; /* No desktop, não passa disso */
+        width: 90%;       /* No mobile, ocupa 90% da tela */
+        height: auto;     /* CRUCIAL: Mantém a proporção, evita cortes */
+        object-fit: contain; /* Cinto de segurança extra contra cortes */
+        border-radius: 8px;
+    }
+    /* --- FIM DA NOVA CORREÇÃO --- */
+
     
     /* INPUTS (Dark Mode Friendly) */
     div[data-baseweb="input"] {
@@ -118,6 +137,12 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # --- FUNÇÕES ---
+def get_base64_image(image_path):
+    if os.path.exists(image_path):
+        with open(image_path, "rb") as img_file:
+            return base64.b64encode(img_file.read()).decode()
+    return None
+
 def load_data():
     if not os.path.exists(DB_FILE): return []
     try:
@@ -179,13 +204,18 @@ with st.sidebar:
     st.link_button("📧 Entrar em Contato", url=CONTACT_FORM_URL, use_container_width=True)
 
 # --- HEADER (Comst.image para evitar cortes) ---
-# Usamos colunas para centralizar a imagem (o Streamlit alinha à esquerda por padrão)
-col_l, col_c, col_r = st.columns([1, 2, 1]) 
-with col_c:
-    if os.path.exists(LOGO_PATH):
-        st.image(LOGO_PATH, width=200, use_container_width=False) 
-    else:
-        st.markdown("""<div style='text-align: center'><h1 style='color:#0068c9;'>BT</h1></div>""", unsafe_allow_html=True)
+# Voltamos a usar HTML/CSS para controle total sobre o não-corte
+img_b64 = get_base64_image(LOGO_PATH)
+if img_b64:
+    st.markdown(f"""
+        <div class="logo-container-v14">
+            <img src="data:image/png;base64,{img_b64}" class="logo-img-v14">
+        </div>
+    """, unsafe_allow_html=True)
+else:
+    # Fallback caso a imagem não seja encontrada
+    st.markdown("""<div style='text-align: center; margin-bottom: 20px;'><h1 style='color:#0068c9;'>BT</h1></div>""", unsafe_allow_html=True)
+
 
 # --- TÍTULO E STATUS (Agrupados) ---
 data = load_data()
