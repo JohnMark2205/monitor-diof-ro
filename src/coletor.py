@@ -11,13 +11,20 @@ import pytz
 import urllib3
 from urllib.parse import unquote
 
-# Configuração
+# Pega o diretório onde este script (coletor.py) está: .../monitor-diof-ro/src
+current_dir = os.path.dirname(os.path.abspath(__file__))
+# Sobe um nível para chegar na raiz: .../monitor-diof-ro
+root_dir = os.path.dirname(current_dir)
+# Define o caminho do banco de dados: .../monitor-diof-ro/data/dados.json
+DB_FILE = os.path.join(root_dir, 'data', 'dados.json')
+
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-DB_FILE = "dados.json"
 TARGET_URL = "https://diof.ro.gov.br"
 TZ_ACRE = pytz.timezone('America/Rio_Branco')
 
+
 def get_session():
+
     session = requests.Session()
     retry = Retry(total=3, backoff_factor=1, status_forcelist=[500, 502, 503, 504])
     adapter = HTTPAdapter(max_retries=retry)
@@ -31,10 +38,6 @@ def get_clean_filename(url):
     except: return "Documento PDF"
 
 def extract_pages_from_pdf(session, url):
-    """
-    Baixa o PDF e extrai o texto separado por páginas.
-    Retorna uma lista: [{'page': 1, 'text': '...'}, {'page': 2, 'text': '...'}]
-    """
     try:
         response = session.get(url, verify=False, stream=True, timeout=60)
         f = BytesIO(response.content)
@@ -43,7 +46,7 @@ def extract_pages_from_pdf(session, url):
         pages_data = []
         for i, page in enumerate(reader.pages):
             text = page.extract_text() or ""
-            if text.strip(): # Só salva se tiver texto
+            if text.strip(): 
                 pages_data.append({
                     "number": i + 1,
                     "text": text
@@ -56,6 +59,9 @@ def extract_pages_from_pdf(session, url):
 def main():
     session = get_session()
     
+    # Garante que a pasta 'data' existe antes de tentar ler/gravar
+    os.makedirs(os.path.dirname(DB_FILE), exist_ok=True)
+
     if os.path.exists(DB_FILE):
         with open(DB_FILE, "r", encoding="utf-8") as f:
             try: database = json.load(f)
@@ -87,8 +93,6 @@ def main():
     for item in reversed(links_on_page): 
         if item['url'] not in processed_urls:
             print(f"🚨 NOVO PDF: {item['title']}")
-            
-            # AGORA SALVAMOS AS PÁGINAS SEPARADAS
             pages_content = extract_pages_from_pdf(session, item['url'])
             
             if pages_content:
@@ -96,17 +100,17 @@ def main():
                     "title": item['title'],
                     "url": item['url'],
                     "scraped_at": datetime.now(TZ_ACRE).strftime("%d/%m/%Y %H:%M:%S"),
-                    "pages_content": pages_content # Estrutura nova
+                    "pages_content": pages_content
                 }
                 database.insert(0, new_entry)
                 processed_urls.add(item['url'])
                 new_found = True
 
     if new_found:
-        database = database[:50] # Mantém os ultimos 50 para não pesar
+        database = database[:50]
         with open(DB_FILE, "w", encoding="utf-8") as f:
             json.dump(database, f, ensure_ascii=False, indent=2)
-        print(f"✅ Base atualizada!")
+        print(f"✅ Base atualizada em {DB_FILE}!")
     else:
         print("zzz Sem novidades.")
 
