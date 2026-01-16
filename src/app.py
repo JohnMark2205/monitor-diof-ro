@@ -24,7 +24,7 @@ LOGO_PATH = os.path.join(root_dir, 'assets', 'logo_diof.png')
 # --- LINK DO FORMULÁRIO DE CONTATO ---
 CONTACT_FORM_URL = "https://forms.gle/ZyjbbLg47n6uVNAz9"
 
-# --- CSS VISUAL (V21 - CONTRASTE BLINDADO) ---
+# --- CSS VISUAL (V22 - SCROLL FIX) ---
 st.markdown("""
     <style>
     /* 1. LAYOUT GERAL */
@@ -37,12 +37,10 @@ st.markdown("""
     .logo-box { text-align: center; width: 100%; margin-bottom: 15px; }
     .logo-box img { max-width: 300px; width: 80%; height: auto; }
 
-    /* 3. INPUTS (Correção: Deixar Streamlit gerenciar cores, focar na Borda) */
+    /* 3. INPUTS */
     div[data-baseweb="input"] {
         border-radius: 8px !important;
-        /* Não forçamos background aqui para não quebrar o modo Light */
     }
-    /* Borda Azul quando clica */
     div[data-baseweb="input"]:focus-within {
         border: 2px solid #2563eb !important;
         box-shadow: none !important;
@@ -65,9 +63,9 @@ st.markdown("""
     }
     .stButton button:hover { background-color: #1d4ed8 !important; }
 
-    /* 5. CARDS (Fundo adaptativo, mas borda azul fixa) */
+    /* 5. CARDS */
     .result-card {
-        background-color: rgba(37, 99, 235, 0.05); /* Leve azul no fundo */
+        background-color: rgba(37, 99, 235, 0.05); 
         border: 1px solid rgba(37, 99, 235, 0.2);
         padding: 16px; 
         border-radius: 12px; 
@@ -76,11 +74,10 @@ st.markdown("""
         box-shadow: 0 2px 4px rgba(0,0,0,0.05);
     }
     
-    /* 6. SNIPPET DE TEXTO (ESTILO TERMINAL - Sempre Escuro) */
-    /* Isso garante leitura perfeita em qualquer modo */
+    /* 6. SNIPPET DE TEXTO (Sempre Escuro) */
     .snippet-box {
-        background: #1e293b; /* Fundo Escuro */
-        color: #e2e8f0;      /* Texto Claro */
+        background: #1e293b; 
+        color: #e2e8f0;      
         padding: 12px; 
         border-radius: 8px; 
         font-family: monospace; 
@@ -98,30 +95,38 @@ st.markdown("""
         box-shadow: 0 4px 6px rgba(37, 99, 235, 0.2); transition: all 0.2s ease-in-out;
     }
     
-    /* 8. LEITURA RÁPIDA (ESTILO TERMINAL - Sempre Escuro) */
+    /* 8. LEITURA RÁPIDA (Sempre Escuro + Scroll Contrastante) */
     .mobile-read-box {
-        background-color: #0f172a; /* Quase preto (Slate-900) */
-        color: #f1f5f9;            /* Branco Gelo */
+        background-color: #0f172a; /* Fundo Preto/Azulado */
+        color: #f1f5f9;            /* Texto Branco Gelo */
         padding: 16px;
         border-radius: 8px;
         border: 1px solid #334155;
         font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
         font-size: 0.95rem;
-        line-height: 1.7; /* Leitura confortável */
+        line-height: 1.7; 
         max-height: 400px;
         overflow-y: auto;
-        -webkit-overflow-scrolling: touch; /* Scroll suave no iPhone */
+        -webkit-overflow-scrolling: touch; 
         white-space: pre-wrap;
         margin-top: 10px;
     }
     
-    /* SCROLLBAR VISÍVEL (Cor Azul Clara para contraste no fundo escuro) */
-    .mobile-read-box::-webkit-scrollbar { width: 8px; }
-    .mobile-read-box::-webkit-scrollbar-track { background: #1e293b; border-radius: 4px; }
-    .mobile-read-box::-webkit-scrollbar-thumb { 
-        background-color: #60a5fa; /* Azul Claro Vibrante */
+    /* --- CORREÇÃO DO SCROLL (ALTO CONTRASTE) --- */
+    .mobile-read-box::-webkit-scrollbar { 
+        width: 10px; /* Um pouco mais larga para facilitar o toque */
+    }
+    .mobile-read-box::-webkit-scrollbar-track { 
+        background: #1e293b; /* Fundo do trilho escuro */
         border-radius: 4px; 
-        border: 2px solid #1e293b; /* Borda para destacar */
+    }
+    .mobile-read-box::-webkit-scrollbar-thumb { 
+        background-color: #cbd5e1; /* CINZA CLARO (Pop visual contra o fundo escuro) */
+        border: 2px solid #1e293b; /* Borda escura ao redor para destacar */
+        border-radius: 6px; 
+    }
+    .mobile-read-box::-webkit-scrollbar-thumb:hover {
+        background-color: #ffffff; /* Fica branco puro ao passar o mouse/tocar */
     }
 
     .streamlit-expanderHeader {
@@ -141,14 +146,12 @@ st.markdown("""
     .footer-credits { font-size: 0.85rem; font-weight: 600; color: #d1d5db; }
     .footer-disclaimer { font-size: 0.7rem; opacity: 0.8; line-height: 1.3; }
     
-    /* AJUSTES ESPECÍFICOS PARA MODO LIGHT (Apenas o necessário) */
+    /* MODO LIGHT (Apenas ajustes de fundo da página) */
     @media (prefers-color-scheme: light) {
         .result-card { background-color: #f8fafc; border: 1px solid #e2e8f0; }
         .footer { background-color: rgba(255, 255, 255, 0.98); color: #4b5563; border-top: 1px solid #e5e7eb; }
         .footer-credits { color: #1f2937; }
         .status-highlight { color: #059669; }
-        
-        /* Obs: Snippet e Leitura Rápida continuam escuras propositalmente */
     }
     </style>
 """, unsafe_allow_html=True)
