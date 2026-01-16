@@ -18,15 +18,33 @@ st.set_page_config(
 current_dir = os.path.dirname(os.path.abspath(__file__))
 root_dir = os.path.dirname(current_dir)
 DB_FILE = os.path.join(root_dir, 'data', 'dados.json')
-STATUS_FILE = os.path.join(root_dir, 'data', 'status.json') # Novo caminho
+STATUS_FILE = os.path.join(root_dir, 'data', 'status.json')
 LOGO_PATH = os.path.join(root_dir, 'assets', 'logo_diof.png')
 
-# --- CSS VISUAL (DARK MODE & CORREÇÕES) ---
+# --- CSS VISUAL (CORREÇÕES GERAIS) ---
 st.markdown("""
     <style>
     .block-container { padding-top: 2rem; padding-bottom: 8rem; }
-    .logo-container { display: flex; justify-content: center; align-items: center; width: 100%; margin-bottom: 20px; }
+
+    /* --- CORREÇÃO DA LOGO (V10) --- */
+    .logo-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 100%;
+        margin-bottom: 20px;
+        height: 130px; /* Define uma altura fixa para o cabeçalho */
+    }
+    /* A imagem se ajusta dentro do container sem cortar */
+    .logo-container img {
+        max-height: 100%;
+        width: auto;
+        object-fit: contain; 
+        border-radius: 8px;
+    }
+    /* --- FIM DA CORREÇÃO DA LOGO --- */
     
+    /* Inputs Dark Mode */
     div[data-baseweb="input"] {
         background-color: transparent !important;
         border: 1px solid rgba(255, 255, 255, 0.2) !important;
@@ -41,6 +59,7 @@ st.markdown("""
         caret-color: #2563eb !important;
     }
     
+    /* Botões */
     .stButton button {
         background-color: #2563eb !important;
         color: white !important;
@@ -52,10 +71,9 @@ st.markdown("""
         transition: background 0.3s;
         margin-top: 1px;
     }
-    .stButton button:hover {
-        background-color: #1d4ed8 !important;
-    }
+    .stButton button:hover { background-color: #1d4ed8 !important; }
 
+    /* Cards */
     .result-card {
         background-color: rgba(37, 99, 235, 0.05); 
         border: 1px solid rgba(37, 99, 235, 0.2);
@@ -65,52 +83,32 @@ st.markdown("""
         border-left: 5px solid #2563eb;
         box-shadow: 0 2px 4px rgba(0,0,0,0.05);
     }
-    
     .snippet-box {
-        background: rgba(0,0,0,0.2); 
-        padding: 12px; 
-        border-radius: 8px; 
-        font-family: monospace; 
-        font-size: 0.85rem; 
-        margin: 12px 0;
-        color: #e5e7eb;
-        border: 1px solid rgba(255,255,255,0.05);
-        line-height: 1.4;
+        background: rgba(0,0,0,0.2); padding: 12px; border-radius: 8px; 
+        font-family: monospace; font-size: 0.85rem; margin: 12px 0;
+        color: #e5e7eb; border: 1px solid rgba(255,255,255,0.05); line-height: 1.4;
     }
-    
     .pdf-button {
-        display: block;
-        width: 100%;
-        background-color: #2563eb;
-        color: white !important;
-        text-decoration: none !important;
-        padding: 12px 0;
-        border-radius: 8px;
-        font-weight: 600;
-        text-align: center;
-        margin-top: 15px;
-        border: none;
-        box-shadow: 0 4px 6px rgba(37, 99, 235, 0.2);
-        transition: all 0.2s ease-in-out;
+        display: block; width: 100%; background-color: #2563eb; color: white !important;
+        text-decoration: none !important; padding: 12px 0; border-radius: 8px;
+        font-weight: 600; text-align: center; margin-top: 15px; border: none;
+        box-shadow: 0 4px 6px rgba(37, 99, 235, 0.2); transition: all 0.2s ease-in-out;
     }
     .pdf-button:hover {
-        background-color: #1d4ed8;
-        transform: translateY(-2px);
+        background-color: #1d4ed8; transform: translateY(-2px);
         box-shadow: 0 6px 12px rgba(37, 99, 235, 0.3);
     }
-    
     .streamlit-expanderHeader {
         font-size: 0.9rem; font-weight: 600; color: #2563eb;
         background-color: rgba(37, 99, 235, 0.05); border-radius: 8px;
     }
     
+    /* Footer */
     .footer {
         position: fixed; left: 0; bottom: 0; width: 100%;
-        background-color: rgba(14, 17, 23, 0.98);
-        color: #9ca3af; text-align: center; padding: 15px 20px; 
-        z-index: 99999; border-top: 1px solid rgba(255,255,255,0.1);
-        display: flex; flex-direction: column; gap: 5px;
-        backdrop-filter: blur(5px);
+        background-color: rgba(14, 17, 23, 0.98); color: #9ca3af; text-align: center;
+        padding: 15px 20px; z-index: 99999; border-top: 1px solid rgba(255,255,255,0.1);
+        display: flex; flex-direction: column; gap: 5px; backdrop-filter: blur(5px);
     }
     .footer-credits { font-size: 0.85rem; font-weight: 600; color: #d1d5db; }
     .footer-disclaimer { font-size: 0.7rem; opacity: 0.8; line-height: 1.3; }
@@ -131,25 +129,16 @@ def trigger_update():
     token = st.secrets.get("GITHUB_TOKEN")
     owner = st.secrets.get("REPO_OWNER")
     repo = st.secrets.get("REPO_NAME")
-    
     if not token or not owner or not repo:
         st.error("⚠️ Configuração de token ausente.")
         return
-
-    headers = {
-        "Authorization": f"token {token}",
-        "Accept": "application/vnd.github.v3+json"
-    }
+    headers = { "Authorization": f"token {token}", "Accept": "application/vnd.github.v3+json" }
     url = f"https://api.github.com/repos/{owner}/{repo}/actions/workflows/monitoramento_horario.yml/dispatches"
-    
     try:
         response = requests.post(url, json={"ref": "main"}, headers=headers)
-        if response.status_code == 204:
-            st.success("🚀 Robô iniciado! Aguarde ~2 min e recarregue.")
-        else:
-            st.error(f"Erro: {response.status_code}")
-    except Exception as e:
-        st.error(f"Erro de conexão: {e}")
+        if response.status_code == 204: st.success("🚀 Robô iniciado! Aguarde ~2 min e recarregue.")
+        else: st.error(f"Erro: {response.status_code}")
+    except Exception as e: st.error(f"Erro de conexão: {e}")
 
 def get_base64_image(image_path):
     if os.path.exists(image_path):
@@ -165,12 +154,10 @@ def load_data():
             return json.loads(content) if content else []
     except: return []
 
-# NOVA FUNÇÃO DE STATUS
 def load_status():
     if not os.path.exists(STATUS_FILE): return None
     try:
-        with open(STATUS_FILE, "r", encoding="utf-8") as f:
-            return json.load(f)
+        with open(STATUS_FILE, "r", encoding="utf-8") as f: return json.load(f)
     except: return None
 
 def search_local(term, data):
@@ -220,10 +207,11 @@ with st.sidebar:
         trigger_update()
     st.info("Após clicar, o robô levará alguns minutos para processar novos PDFs.")
 
-# --- HEADER ---
+# --- HEADER (Imagem Corrigida) ---
 img_b64 = get_base64_image(LOGO_PATH)
 if img_b64:
-    st.markdown(f"""<div class="logo-container"><img src="data:image/png;base64,{img_b64}" width="150" style="border-radius:8px;"></div>""", unsafe_allow_html=True)
+    # Removemos o width="150" fixo e o style inline. O CSS agora cuida disso.
+    st.markdown(f"""<div class="logo-container"><img src="data:image/png;base64,{img_b64}"></div>""", unsafe_allow_html=True)
 else:
     st.markdown("""<div class="logo-container"><h1 style='color:#0068c9;'>BT</h1></div>""", unsafe_allow_html=True)
 
@@ -236,20 +224,20 @@ st.markdown("""
 
 # --- LÓGICA PRINCIPAL ---
 data = load_data()
-status = load_status() # Carrega o status do robô
+status = load_status()
 
 if data:
-    # LÓGICA DA DATA:
-    # Se existir o status do robô (status.json), usa ele.
-    # Se não (ex: primeira vez), usa a data do último PDF encontrado.
     if status and 'last_run' in status:
         display_date = status['last_run']
     else:
         display_date = data[0].get('scraped_at', 'Desconhecido')
 
+    # --- MENSAGEM CORRIGIDA (Status + Aviso de Escopo) ---
     st.info(f"""
-    ✅ **Sistema Verificado em:** {display_date}
-    \n📂 **Escopo:** Monitorando as **{len(data)} últimas edições** da capa do portal DIOF.
+    ✅ **Status do Robô:** Verificação realizada em **{display_date}**.
+    \n---
+    \n📂 **Escopo da Pesquisa:** O sistema monitora apenas as **{len(data)} edições mais recentes** (disponíveis na capa do portal DIOF).
+    \n*⚠️ Atenção: Não realizamos buscas no acervo histórico completo do Diário Oficial.*
     """)
 else:
     st.warning("⚠️ Base de dados vazia.")
