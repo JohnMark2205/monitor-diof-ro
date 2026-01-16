@@ -1,7 +1,6 @@
 import streamlit as st
 import json
 import os
-import base64
 from datetime import datetime
 import requests
 import time
@@ -21,39 +20,15 @@ DB_FILE = os.path.join(root_dir, 'data', 'dados.json')
 STATUS_FILE = os.path.join(root_dir, 'data', 'status.json')
 LOGO_PATH = os.path.join(root_dir, 'assets', 'logo_diof.png')
 
-# --- LINK DO FORMULÁRIO DE CONTATO (Coloque seu link aqui) ---
+# --- LINK DO FORMULÁRIO DE CONTATO ---
 CONTACT_FORM_URL = "https://forms.google.com/seu-formulario-aqui" 
 
 # --- CSS VISUAL ---
 st.markdown("""
     <style>
     .block-container { padding-top: 2rem; padding-bottom: 8rem; }
-
-    /* --- CORREÇÃO DA LOGO (V12 - Object-Fit Contain) --- */
-    .logo-container {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        width: 100%;
-        height: 120px; /* Altura fixa para o cabeçalho */
-        margin-bottom: 10px;
-        overflow: hidden; /* Garante que nada saia do container */
-    }
-    .logo-container img {
-        height: 100%;       /* Ocupa toda a altura do container */
-        width: auto;        /* Largura se ajusta proporcionalmente */
-        object-fit: contain;/* O PULO DO GATO: Faz a imagem caber sem cortar */
-    }
-    /* --- FIM DA CORREÇÃO DA LOGO --- */
     
-    /* STATUS DO ROBÔ (Abaixo do Título) */
-    .status-text {
-        text-align: center;
-        font-size: 0.8rem;
-        color: #9ca3af; /* Cinza suave */
-        margin-bottom: 25px;
-        font-family: monospace;
-    }
+    /* REMOVIDO CSS DA LOGO (Usaremos st.image nativo) */
     
     /* INPUTS (Dark Mode Friendly) */
     div[data-baseweb="input"] {
@@ -114,6 +89,12 @@ st.markdown("""
         background-color: rgba(37, 99, 235, 0.05); border-radius: 8px;
     }
     
+    /* TEXTOS DE STATUS */
+    .status-highlight {
+        color: #34d399; /* Verde Suave */
+        font-weight: 600;
+    }
+    
     /* FOOTER */
     .footer {
         position: fixed; left: 0; bottom: 0; width: 100%;
@@ -131,18 +112,12 @@ st.markdown("""
         .footer-credits { color: #1f2937; }
         .stTextInput input { color: #1e293b !important; } 
         div[data-baseweb="input"] { border: 1px solid #cbd5e1 !important; }
-        .status-text { color: #6b7280; }
+        .status-highlight { color: #059669; }
     }
     </style>
 """, unsafe_allow_html=True)
 
 # --- FUNÇÕES ---
-def get_base64_image(image_path):
-    if os.path.exists(image_path):
-        with open(image_path, "rb") as img_file:
-            return base64.b64encode(img_file.read()).decode()
-    return None
-
 def load_data():
     if not os.path.exists(DB_FILE): return []
     try:
@@ -194,35 +169,25 @@ def search_local(term, data):
             })
     return results
 
-# --- SIDEBAR (NOVA VERSÃO) ---
+# --- SIDEBAR ---
 with st.sidebar:
     st.header("⚙️ Painel de Controle")
     st.info("O sistema verifica novas edições automaticamente a cada 30 minutos.")
-    
     st.divider()
-    
     st.write("**Precisa de ajuda?**")
     st.write("Não encontrou o que buscava ou notou algum erro na aplicação?")
-    
-    # Botão de Link para o Formulário
     st.link_button("📧 Entrar em Contato", url=CONTACT_FORM_URL, use_container_width=True)
 
-# --- HEADER (Imagem e Títulos) ---
-img_b64 = get_base64_image(LOGO_PATH)
-if img_b64:
-    # A classe .logo-container img no CSS cuida do tamanho agora
-    st.markdown(f"""<div class="logo-container"><img src="data:image/png;base64,{img_b64}"></div>""", unsafe_allow_html=True)
-else:
-    st.markdown("""<div class="logo-container"><h1 style='color:#0068c9;'>BT</h1></div>""", unsafe_allow_html=True)
+# --- HEADER (Comst.image para evitar cortes) ---
+# Usamos colunas para centralizar a imagem (o Streamlit alinha à esquerda por padrão)
+col_l, col_c, col_r = st.columns([1, 2, 1]) 
+with col_c:
+    if os.path.exists(LOGO_PATH):
+        st.image(LOGO_PATH, width=200, use_container_width=False) 
+    else:
+        st.markdown("""<div style='text-align: center'><h1 style='color:#0068c9;'>BT</h1></div>""", unsafe_allow_html=True)
 
-st.markdown("""
-<div style="text-align:center; margin-bottom:10px; margin-top:-10px;">
-    <h1 style="font-weight:800; font-size:1.8rem; margin:0;">Buscador de Termos</h1>
-    <p style="font-size:0.9rem; opacity:0.7; margin-top:5px;">Monitoramento Automatizado</p>
-</div>
-""", unsafe_allow_html=True)
-
-# --- DADOS E STATUS ---
+# --- TÍTULO E STATUS (Agrupados) ---
 data = load_data()
 status = load_status()
 
@@ -232,15 +197,18 @@ if status and 'last_run' in status:
 elif data:
     display_date = data[0].get('scraped_at', 'Desconhecido')
 
-# 1. STATUS DO ROBÔ (Fora da caixa azul, centralizado)
 st.markdown(f"""
-<div class="status-text">
-    ✅ Última verificação do sistema: {display_date}
+<div style="text-align:center; margin-top:-10px;">
+    <h1 style="font-weight:800; font-size:1.8rem; margin:0;">Buscador de Termos</h1>
+    <p style="font-size:0.9rem; opacity:0.7; margin-top:5px; margin-bottom:5px;">Monitoramento Automatizado</p>
+    <p style="font-size:0.8rem; font-family:monospace; color:#9ca3af;">
+        ✅ Última verificação: <span class="status-highlight">{display_date}</span>
+    </p>
 </div>
 """, unsafe_allow_html=True)
 
+# --- INFO DE ESCOPO ---
 if data:
-    # 2. CAIXA DE ESCOPO (Limpa e Focada)
     st.info(f"""
     📂 **Escopo da Pesquisa:** O sistema monitora as **{len(data)} edições mais recentes** disponíveis na capa do portal DIOF.
     \n*⚠️ Atenção: Não realizamos buscas no acervo histórico completo (anos anteriores), apenas nas edições vigentes do painel.*
