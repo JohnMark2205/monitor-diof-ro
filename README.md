@@ -9,7 +9,7 @@
 
 ## 🎯 Sobre o Projeto
 
-O **Monitor DIOF-RO** é uma ferramenta desenvolvida para otimizar a pesquisa de termos (como nomes, CPFs, matrículas) nos Diários Oficiais do Governo de Rondônia.
+O **Monitor DIOF-RO** é uma ferramenta desenvolvida para otimizar a pesquisa de termos (como nomes, CPFs, matrículas) no Diário Oficiai do Governo de Rondônia (https://diof.ro.gov.br/).
 
 Diferente da busca tradicional, que exige o download manual de arquivos pesados, este sistema utiliza um **robô indexador** que varre o portal oficial periodicamente, processa os PDFs e cria uma base de dados otimizada. Isso permite buscas instantâneas (menos de 0.2s) e identifica exatamente em qual página o termo se encontra.
 
