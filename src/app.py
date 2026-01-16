@@ -112,7 +112,9 @@ st.markdown("""
         white-space: pre-wrap;
         margin-top: 10px;
     }
-    .mobile-read-box::-webkit-scrollbar { width: 6px; }
+    /* Scrollbar Dark Mode */
+    .mobile-read-box::-webkit-scrollbar { width: 8px; }
+    .mobile-read-box::-webkit-scrollbar-track { background: transparent; }
     .mobile-read-box::-webkit-scrollbar-thumb { background-color: #475569; border-radius: 10px; }
     
     .status-highlight { color: #34d399; font-weight: 600; }
@@ -144,7 +146,7 @@ st.markdown("""
             border: 1px solid #e2e8f0;
         }
 
-        /* Snippet (Caixa cinza claro) */
+        /* Snippet (Caixa cinza claro, texto escuro) */
         .snippet-box {
             background: #f1f5f9; /* Slate-100 */
             color: #334155;      /* Slate-700 (Escuro) */
@@ -157,7 +159,10 @@ st.markdown("""
             color: #1e293b; /* Texto Escuro */
             border: 1px solid #cbd5e1;
         }
-        .mobile-read-box::-webkit-scrollbar-thumb { background-color: #cbd5e1; }
+        /* Scrollbar mais escura para aparecer no fundo branco */
+        .mobile-read-box::-webkit-scrollbar-thumb { 
+            background-color: #94a3b8; /* Slate-400 (Cinza visível) */
+        }
 
         /* Footer (Fundo Branco) */
         .footer {
