@@ -24,7 +24,7 @@ LOGO_PATH = os.path.join(root_dir, 'assets', 'logo_diof.png')
 # --- LINK DO FORMULÁRIO DE CONTATO ---
 CONTACT_FORM_URL = "https://forms.gle/ZyjbbLg47n6uVNAz9"
 
-# --- CSS VISUAL (ADAPTATIVO) ---
+# --- CSS VISUAL (ADAPTATIVO V20) ---
 st.markdown("""
     <style>
     /* 1. LAYOUT GERAL */
@@ -34,19 +34,11 @@ st.markdown("""
     }
     
     /* 2. LOGO */
-    .logo-box {
-        text-align: center;
-        width: 100%;
-        margin-bottom: 15px;
-    }
-    .logo-box img {
-        max-width: 300px;
-        width: 80%;
-        height: auto;
-    }
+    .logo-box { text-align: center; width: 100%; margin-bottom: 15px; }
+    .logo-box img { max-width: 300px; width: 80%; height: auto; }
 
-    /* 3. INPUTS (ADAPTATIVO) */
-    /* Regra Base (Serve para Dark Mode) */
+    /* 3. INPUTS (Correção Crítica de Contraste) */
+    /* Configuração Padrão (Baseada no Dark Mode) */
     div[data-baseweb="input"] {
         background-color: transparent !important;
         border: 1px solid rgba(255, 255, 255, 0.2) !important;
@@ -56,12 +48,12 @@ st.markdown("""
         border: 2px solid #2563eb !important;
         box-shadow: none !important;
     }
+    /* IMPORTANTE: Removemos a cor forçada. Deixamos o Streamlit gerenciar a cor do texto */
     .stTextInput input {
-        color: #ffffff !important; /* Branco no Dark Mode */
         caret-color: #2563eb !important;
     }
     
-    /* 4. BOTÕES */
+    /* 4. BOTÕES (Sempre Azul com texto Branco - Funciona nos dois modos) */
     .stButton button {
         background-color: #2563eb !important;
         color: white !important;
@@ -75,7 +67,7 @@ st.markdown("""
     }
     .stButton button:hover { background-color: #1d4ed8 !important; }
 
-    /* 5. CARDS DE RESULTADO (ADAPTATIVO) */
+    /* 5. CARDS (Padrão Dark) */
     .result-card {
         background-color: rgba(37, 99, 235, 0.05); 
         border: 1px solid rgba(37, 99, 235, 0.2);
@@ -84,11 +76,18 @@ st.markdown("""
         margin-bottom: 16px; 
         border-left: 5px solid #2563eb;
         box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        color: inherit; /* Herda a cor do texto do tema */
     }
     .snippet-box {
-        background: rgba(0,0,0,0.2); padding: 12px; border-radius: 8px; 
-        font-family: monospace; font-size: 0.85rem; margin: 12px 0;
-        color: #e5e7eb; border: 1px solid rgba(255,255,255,0.05); line-height: 1.4;
+        background: rgba(0,0,0,0.2); 
+        padding: 12px; 
+        border-radius: 8px; 
+        font-family: monospace; 
+        font-size: 0.85rem; 
+        margin: 12px 0;
+        color: #e5e7eb; /* Texto claro fixo para fundo escuro */
+        border: 1px solid rgba(255,255,255,0.05); 
+        line-height: 1.4;
     }
     .pdf-button {
         display: block; width: 100%; background-color: #2563eb; color: white !important;
@@ -96,44 +95,29 @@ st.markdown("""
         font-weight: 600; text-align: center; margin-top: 15px; border: none;
         box-shadow: 0 4px 6px rgba(37, 99, 235, 0.2); transition: all 0.2s ease-in-out;
     }
-    .pdf-button:hover {
-        background-color: #1d4ed8; transform: translateY(-2px);
-        box-shadow: 0 6px 12px rgba(37, 99, 235, 0.3);
-    }
-    .streamlit-expanderHeader {
-        font-size: 0.9rem; font-weight: 600; color: #2563eb;
-        background-color: rgba(37, 99, 235, 0.05); border-radius: 8px;
-    }
     
-    /* 6. LEITURA RÁPIDA (ADAPTATIVO & SCROLL FIX) */
+    /* 6. LEITURA RÁPIDA (Padrão Dark) */
     .mobile-read-box {
-        /* Configuração Base (Dark Mode) */
-        background-color: #1e293b; /* Cinza Escuro (Slate-800) */
-        color: #e2e8f0;            /* Branco Suave */
-        
+        background-color: #1e293b;
+        color: #e2e8f0;
         padding: 16px;
         border-radius: 8px;
         border: 1px solid rgba(255, 255, 255, 0.1);
-        
         font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
         font-size: 0.95rem;
         line-height: 1.6;
-        
         max-height: 400px;
-        overflow-y: auto;          /* Scroll Ativo */
-        -webkit-overflow-scrolling: touch; /* ESSENCIAL PARA IPHONE */
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
         white-space: pre-wrap;
-        
         margin-top: 10px;
     }
-    /* Scrollbar */
     .mobile-read-box::-webkit-scrollbar { width: 6px; }
-    .mobile-read-box::-webkit-scrollbar-track { background: transparent; }
     .mobile-read-box::-webkit-scrollbar-thumb { background-color: #475569; border-radius: 10px; }
-
+    
     .status-highlight { color: #34d399; font-weight: 600; }
     
-    /* FOOTER */
+    /* FOOTER (Padrão Dark) */
     .footer {
         position: fixed; left: 0; bottom: 0; width: 100%;
         background-color: rgba(14, 17, 23, 0.98); color: #9ca3af; text-align: center;
@@ -142,34 +126,45 @@ st.markdown("""
     }
     .footer-credits { font-size: 0.85rem; font-weight: 600; color: #d1d5db; }
     .footer-disclaimer { font-size: 0.7rem; opacity: 0.8; line-height: 1.3; }
-    
-    /* --- MEDIA QUERY: MODO CLARO (LIGHT MODE) --- */
+
+    /* ============================================================
+       MÁGICA DO MODO LIGHT (Override para fundo branco)
+       ============================================================ */
     @media (prefers-color-scheme: light) {
-        /* Fundo do Card */
-        .result-card { background-color: #f8fafc; border: 1px solid #e2e8f0; }
-        
-        /* Box de código (Snippet) */
-        .snippet-box { background: #f1f5f9; color: #334155; border: 1px solid #cbd5e1; }
-        
-        /* Input de Busca (CORREÇÃO DO TEXTO INVISÍVEL) */
-        div[data-baseweb="input"] { 
-            background-color: #ffffff !important; 
-            border: 1px solid #cbd5e1 !important; 
+        /* Input: Fundo branco e borda cinza */
+        div[data-baseweb="input"] {
+            background-color: #ffffff !important;
+            border: 1px solid #cbd5e1 !important;
         }
-        .stTextInput input { 
-            color: #1e293b !important; /* TEXTO ESCURO */
-        } 
-        
-        /* Box de Leitura Rápida no Light Mode */
+        /* O texto do input fica preto automaticamente pelo Streamlit */
+
+        /* Cards: Fundo quase branco */
+        .result-card {
+            background-color: #f8fafc; /* Slate-50 */
+            border: 1px solid #e2e8f0;
+        }
+
+        /* Snippet (Caixa cinza claro) */
+        .snippet-box {
+            background: #f1f5f9; /* Slate-100 */
+            color: #334155;      /* Slate-700 (Escuro) */
+            border: 1px solid #cbd5e1;
+        }
+
+        /* Leitura Rápida (Fundo Branco, Texto Escuro) */
         .mobile-read-box {
-            background-color: #ffffff; /* Fundo Branco */
-            color: #1e293b;            /* Texto Escuro */
+            background-color: #ffffff;
+            color: #1e293b; /* Texto Escuro */
             border: 1px solid #cbd5e1;
         }
         .mobile-read-box::-webkit-scrollbar-thumb { background-color: #cbd5e1; }
 
-        /* Footer */
-        .footer { background-color: rgba(255, 255, 255, 0.98); color: #4b5563; border-top: 1px solid #e5e7eb; }
+        /* Footer (Fundo Branco) */
+        .footer {
+            background-color: rgba(255, 255, 255, 0.98);
+            color: #4b5563;
+            border-top: 1px solid #e5e7eb;
+        }
         .footer-credits { color: #1f2937; }
         
         /* Status */
