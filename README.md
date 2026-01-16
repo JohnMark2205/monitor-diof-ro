@@ -22,9 +22,13 @@ Diferente da busca tradicional, que exige o download manual de arquivos pesados,
 - **🤖 Automação:** Atualização automática da base de dados via **GitHub Actions** (frequência horária).
 
 ## 📸 Screenshots
+*Tela principal - Modo Dark*
+![Interface Principal - Dark](assets/tela_inicial_dark.png)
+<br>
+<br>
+*Tela principal - Modo light*
+![Interface Principal - Dark](assets/tela_inicial_light.png)
 
-![Interface Principal](assets/tela_inicial.png)
-*Interface de busca com resultados detalhados e botões de ação.*
 
 ## 🛠️ Tecnologias Utilizadas
 
