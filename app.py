@@ -51,13 +51,13 @@ st.markdown("""
         line-height: 1.4;
     }
     
-    /* BOTÃO CLEAN (Sem ícone, com hover) */
+    /* BOTÃO CLEAN */
     .pdf-button {
         display: block;
         width: 100%;
         background-color: #2563eb;
         color: white !important;
-        text-decoration: none !important; /* Tira o sublinhado */
+        text-decoration: none !important;
         padding: 12px 0;
         border-radius: 8px;
         font-weight: 600;
@@ -71,7 +71,7 @@ st.markdown("""
     /* Efeito Hover */
     .pdf-button:hover {
         background-color: #1d4ed8;
-        transform: translateY(-2px); /* Sobe um pouquinho */
+        transform: translateY(-2px);
         box-shadow: 0 6px 12px rgba(37, 99, 235, 0.3);
     }
     .pdf-button:active {
@@ -149,10 +149,9 @@ def search_local(term, data):
                         end = min(len(page['text']), idx + 100)
                         snippet = page['text'][start:end].replace("\n", " ")
             
-            # 2. Fallback (Formato antigo ou misto)
+            # 2. Fallback (Formato antigo)
             if not found_pages and 'content' in doc:
                  if term_lower in doc['content'].lower():
-                    # Se achou no texto antigo, marcamos com código especial 9999
                     found_pages.append("9999") 
                     idx = doc['content'].lower().find(term_lower)
                     snippet = doc['content'][idx:idx+100]
@@ -209,17 +208,24 @@ if query:
             st.success(f"🔍 Encontrado em {len(results)} documentos ({duration:.3f}s)")
             
             for res in results:
-                # TRATAMENTO DAS PÁGINAS
-                # Se tiver o código "9999", é dado velho. Se não, é dado novo.
+                # TRATAMENTO DO LINK DA PÁGINA
+                # Se tiver número de página válido, adiciona #page=X ao link
+                pdf_link = res['url']
+                first_page = res['pages'][0] if res['pages'] else None
+                
+                if first_page and first_page != "9999" and first_page.isdigit():
+                    pdf_link = f"{res['url']}#page={first_page}"
+
+                # Exibição do texto das páginas
                 if "9999" in res['pages']:
-                     pages_display = "Página: Não identificada (Base antiga, aguarde atualização)"
+                     pages_display = "Página: Não identificada (Necessário limpar base antiga)"
                 else:
                     pages_str = ', '.join(res['pages'])
                     if len(res['pages']) > 15: 
                         pages_str = f"{', '.join(res['pages'][:15])}..."
                     pages_display = f"Página(s): <strong>{pages_str}</strong>"
 
-                # ATENÇÃO: O HTML abaixo está "colado" na margem esquerda. NÃO INDENTE ELE.
+                # HTML DO CARD
                 html_card = f"""
 <div class="result-card">
 <div style="display:flex; justify-content:space-between; align-items:flex-start;">
@@ -232,8 +238,8 @@ if query:
 <div class="snippet-box">
 ...{res['snippet']}...
 </div>
-<a href="{res['url']}" target="_blank" class="pdf-button">
-Abrir PDF Original
+<a href="{pdf_link}" target="_blank" class="pdf-button">
+Abrir no local do PDF
 </a>
 </div>
 """
