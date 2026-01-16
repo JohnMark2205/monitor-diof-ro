@@ -27,32 +27,24 @@ CONTACT_FORM_URL = "https://forms.google.com/seu-formulario-aqui"
 # --- CSS VISUAL ---
 st.markdown("""
     <style>
-    .block-container { padding-top: 2rem; padding-bottom: 8rem; }
+    /* 1. CORREÇÃO PRINCIPAL: Espaço seguro no topo para não cortar na barra do Streamlit */
+    .block-container { 
+        padding-top: 4.5rem !important; /* Aumentado para empurrar o conteúdo para baixo */
+        padding-bottom: 6rem; 
+    }
     
-    /* --- CORREÇÃO DEFINITIVA DA LOGO (V15) --- */
-    .logo-container-final {
-        display: flex;
-        justify-content: center;
-        align-items: center;
+    /* 2. LOGO CENTRALIZADA E RESPONSIVA */
+    .logo-box {
+        text-align: center;
         width: 100%;
-        margin-bottom: 10px;
-        padding: 0 10px; /* Margem de segurança nas laterais */
+        margin-bottom: 15px;
+    }
+    .logo-box img {
+        max-width: 300px; /* Tamanho ideal no Desktop */
+        width: 80%;       /* Tamanho seguro no Mobile (não vaza a tela) */
+        height: auto;     /* Mantém proporção correta */
     }
 
-    .logo-img-final {
-        /* REGRA DE OURO: Controlar pela altura para não ficar gigante */
-        height: auto; 
-        max-height: 80px; /* Altura máxima permitida (evita ficar enorme) */
-        
-        /* Segurança para Mobile */
-        width: auto;
-        max-width: 100%; /* Nunca ultrapassa a largura da tela */
-        
-        object-fit: contain; /* Garante que nunca corte */
-    }
-    /* --- FIM DA CORREÇÃO --- */
-
-    
     /* INPUTS (Dark Mode Friendly) */
     div[data-baseweb="input"] {
         background-color: transparent !important;
@@ -205,14 +197,14 @@ with st.sidebar:
     st.divider()
     st.write("**Precisa de ajuda?**")
     st.write("Não encontrou o que buscava ou notou algum erro na aplicação?")
-    st.link_button("📧 Entrar em Contato", url=CONTACT_FORM_URL, use_container_width=True)
+    st.link_button("📧 Entrar em Contato", url="https://forms.gle/jqeyA11N5gB4WEmF9", use_container_width=True)
 
-# --- HEADER (LOGOTIPO AJUSTADO) ---
+# --- HEADER (IMAGEM COM MARGEM CORRIGIDA) ---
 img_b64 = get_base64_image(LOGO_PATH)
 if img_b64:
     st.markdown(f"""
-        <div class="logo-container-final">
-            <img src="data:image/png;base64,{img_b64}" class="logo-img-final">
+        <div class="logo-box">
+            <img src="data:image/png;base64,{img_b64}">
         </div>
     """, unsafe_allow_html=True)
 else:
