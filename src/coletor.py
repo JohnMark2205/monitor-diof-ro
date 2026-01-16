@@ -11,20 +11,17 @@ import pytz
 import urllib3
 from urllib.parse import unquote
 
-# Pega o diretório onde este script (coletor.py) está: .../monitor-diof-ro/src
+# --- CONFIGURAÇÃO DE CAMINHOS ---
 current_dir = os.path.dirname(os.path.abspath(__file__))
-# Sobe um nível para chegar na raiz: .../monitor-diof-ro
 root_dir = os.path.dirname(current_dir)
-# Define o caminho do banco de dados: .../monitor-diof-ro/data/dados.json
 DB_FILE = os.path.join(root_dir, 'data', 'dados.json')
+STATUS_FILE = os.path.join(root_dir, 'data', 'status.json') # Novo arquivo de status
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 TARGET_URL = "https://diof.ro.gov.br"
 TZ_ACRE = pytz.timezone('America/Rio_Branco')
 
-
 def get_session():
-
     session = requests.Session()
     retry = Retry(total=3, backoff_factor=1, status_forcelist=[500, 502, 503, 504])
     adapter = HTTPAdapter(max_retries=retry)
@@ -56,10 +53,23 @@ def extract_pages_from_pdf(session, url):
         print(f"⚠️ Erro ao ler PDF {url}: {e}")
         return []
 
+def save_status():
+    """Salva o horário da última verificação do robô"""
+    status = {
+        "last_run": datetime.now(TZ_ACRE).strftime("%d/%m/%Y %H:%M:%S"),
+        "message": "Sistema Operante"
+    }
+    try:
+        with open(STATUS_FILE, "w", encoding="utf-8") as f:
+            json.dump(status, f, ensure_ascii=False, indent=2)
+        print(f"⏱️ Status atualizado: {status['last_run']}")
+    except Exception as e:
+        print(f"Erro ao salvar status: {e}")
+
 def main():
     session = get_session()
     
-    # Garante que a pasta 'data' existe antes de tentar ler/gravar
+    # Garante que a pasta existe
     os.makedirs(os.path.dirname(DB_FILE), exist_ok=True)
 
     if os.path.exists(DB_FILE):
@@ -77,6 +87,8 @@ def main():
         soup = BeautifulSoup(response.content, 'html.parser')
     except Exception as e:
         print(f"❌ Erro de acesso: {e}")
+        # Mesmo com erro, tentamos salvar o status para mostrar a hora da tentativa
+        save_status() 
         return
 
     links_on_page = []
@@ -110,9 +122,12 @@ def main():
         database = database[:50]
         with open(DB_FILE, "w", encoding="utf-8") as f:
             json.dump(database, f, ensure_ascii=False, indent=2)
-        print(f"✅ Base atualizada em {DB_FILE}!")
+        print(f"✅ Base de dados atualizada!")
     else:
-        print("zzz Sem novidades.")
+        print("zzz Sem novos PDFs.")
+    
+    # SALVA O STATUS (SEMPRE)
+    save_status()
 
 if __name__ == "__main__":
     main()

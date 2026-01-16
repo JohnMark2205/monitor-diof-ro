@@ -33,6 +33,6 @@ jobs:
     - name: Salvar Atualização (Se houver)
       uses: stefanzweifel/git-auto-commit-action@v4
       with:
-        commit_message: "🚨 Novo PDF detectado no DIOF (Auto-Update)"
-        file_pattern: data/dados.json
+        commit_message: "🚨 Atualização do Robô (Status/Dados)"
+        file_pattern: data/*.json
         skip_dirty_check: false

@@ -18,38 +18,29 @@ st.set_page_config(
 current_dir = os.path.dirname(os.path.abspath(__file__))
 root_dir = os.path.dirname(current_dir)
 DB_FILE = os.path.join(root_dir, 'data', 'dados.json')
+STATUS_FILE = os.path.join(root_dir, 'data', 'status.json') # Novo caminho
 LOGO_PATH = os.path.join(root_dir, 'assets', 'logo_diof.png')
 
-# --- CSS VISUAL (CORREÇÃO DE CORES DARK MODE) ---
+# --- CSS VISUAL (DARK MODE & CORREÇÕES) ---
 st.markdown("""
     <style>
     .block-container { padding-top: 2rem; padding-bottom: 8rem; }
     .logo-container { display: flex; justify-content: center; align-items: center; width: 100%; margin-bottom: 20px; }
     
-    /* --- CORREÇÃO DO INPUT (DARK MODE) --- */
-    
-    /* 1. Container do Input (A caixa) */
     div[data-baseweb="input"] {
-        background-color: transparent !important; /* Usa o fundo do tema escuro */
-        border: 1px solid rgba(255, 255, 255, 0.2) !important; /* Borda sutil branca */
+        background-color: transparent !important;
+        border: 1px solid rgba(255, 255, 255, 0.2) !important;
         border-radius: 8px !important;
     }
-
-    /* 2. Quando clica (Foco) */
     div[data-baseweb="input"]:focus-within {
-        border: 2px solid #2563eb !important; /* Azul Profissional */
+        border: 2px solid #2563eb !important;
         box-shadow: none !important;
     }
-
-    /* 3. Texto digitado (A CORREÇÃO PRINCIPAL) */
     .stTextInput input {
-        color: #ffffff !important; /* TEXTO BRANCO */
-        caret-color: #2563eb !important; /* Cursor azul */
+        color: #ffffff !important;
+        caret-color: #2563eb !important;
     }
     
-    /* --- FIM DA CORREÇÃO --- */
-    
-    /* Botão de Pesquisar */
     .stButton button {
         background-color: #2563eb !important;
         color: white !important;
@@ -65,7 +56,6 @@ st.markdown("""
         background-color: #1d4ed8 !important;
     }
 
-    /* Cards */
     .result-card {
         background-color: rgba(37, 99, 235, 0.05); 
         border: 1px solid rgba(37, 99, 235, 0.2);
@@ -76,7 +66,6 @@ st.markdown("""
         box-shadow: 0 2px 4px rgba(0,0,0,0.05);
     }
     
-    /* Snippet Box */
     .snippet-box {
         background: rgba(0,0,0,0.2); 
         padding: 12px; 
@@ -131,15 +120,13 @@ st.markdown("""
         .snippet-box { background: #f1f5f9; color: #374151; border: 1px solid #e2e8f0; }
         .footer { background-color: rgba(255, 255, 255, 0.98); color: #4b5563; border-top: 1px solid #e5e7eb; }
         .footer-credits { color: #1f2937; }
-        /* Ajuste do input para modo claro (caso o usuário troque) */
         .stTextInput input { color: #1e293b !important; } 
         div[data-baseweb="input"] { border: 1px solid #cbd5e1 !important; }
     }
     </style>
 """, unsafe_allow_html=True)
 
-
-# --- FUNÇÃO PARA ACIONAR O GITHUB ACTIONS ---
+# --- FUNÇÕES ---
 def trigger_update():
     token = st.secrets.get("GITHUB_TOKEN")
     owner = st.secrets.get("REPO_OWNER")
@@ -164,30 +151,6 @@ def trigger_update():
     except Exception as e:
         st.error(f"Erro de conexão: {e}")
 
-# --- BARRA LATERAL ---
-with st.sidebar:
-    st.header("⚙️ Painel de Controle")
-    st.write("Atualização automática a cada 30 min.")
-    st.divider()
-    st.write("**Não encontrou o que buscava?**")
-    if st.button("🔄 Forçar Atualização Agora"):
-        trigger_update()
-    st.info("Após clicar, o robô levará alguns minutos para processar novos PDFs.")
-
-# --- RODAPÉ ---
-st.markdown(f"""
-<div class="footer">
-    <div class="footer-credits">
-        © {datetime.now().year} BT System • Desenvolvido por <strong>João Marcos</strong>
-    </div>
-    <div class="footer-disclaimer">
-        ⚠️ <strong>Aviso Legal:</strong> Esta aplicação é independente e <u>não possui vínculo oficial</u> com o Governo de Rondônia.<br>
-        A pesquisa utiliza apenas dados públicos disponíveis no portal <em>diof.ro.gov.br</em>.
-    </div>
-</div>
-""", unsafe_allow_html=True)
-
-# --- FUNÇÕES ---
 def get_base64_image(image_path):
     if os.path.exists(image_path):
         with open(image_path, "rb") as img_file:
@@ -202,37 +165,39 @@ def load_data():
             return json.loads(content) if content else []
     except: return []
 
+# NOVA FUNÇÃO DE STATUS
+def load_status():
+    if not os.path.exists(STATUS_FILE): return None
+    try:
+        with open(STATUS_FILE, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except: return None
+
 def search_local(term, data):
     results = []
     term_lower = term.lower()
-    
     for doc in data:
         found_pages = []
         full_text_found = "" 
         snippet = ""
-        
         try:
             pages = doc.get('pages_content', [])
             for page in pages:
                 if term_lower in page['text'].lower():
                     page_num = str(page['number']).strip()
                     found_pages.append(page_num)
-                    
-                    if not full_text_found:
-                        full_text_found = page['text']
+                    if not full_text_found: full_text_found = page['text']
                     if not snippet:
                         idx = page['text'].lower().find(term_lower)
                         start = max(0, idx - 40)
                         end = min(len(page['text']), idx + 100)
                         snippet = page['text'][start:end].replace("\n", " ")
-            
             if not found_pages and 'content' in doc:
                  if term_lower in doc['content'].lower():
                     found_pages.append("9999") 
                     idx = doc['content'].lower().find(term_lower)
                     snippet = doc['content'][idx:idx+100]
         except: continue
-            
         if found_pages:
             unique_pages = sorted(list(set(found_pages)), key=lambda x: int(x) if x.isdigit() else 9999)
             results.append({
@@ -244,6 +209,16 @@ def search_local(term, data):
                 "full_text": full_text_found
             })
     return results
+
+# --- SIDEBAR ---
+with st.sidebar:
+    st.header("⚙️ Painel de Controle")
+    st.write("Atualização automática a cada 30 min.")
+    st.divider()
+    st.write("**Não encontrou o que buscava?**")
+    if st.button("🔄 Forçar Atualização Agora"):
+        trigger_update()
+    st.info("Após clicar, o robô levará alguns minutos para processar novos PDFs.")
 
 # --- HEADER ---
 img_b64 = get_base64_image(LOGO_PATH)
@@ -261,33 +236,33 @@ st.markdown("""
 
 # --- LÓGICA PRINCIPAL ---
 data = load_data()
+status = load_status() # Carrega o status do robô
 
-# 1. Info da Base (Com Escopo)
 if data:
-    last_update = data[0].get('scraped_at', 'Desconhecido')
+    # LÓGICA DA DATA:
+    # Se existir o status do robô (status.json), usa ele.
+    # Se não (ex: primeira vez), usa a data do último PDF encontrado.
+    if status and 'last_run' in status:
+        display_date = status['last_run']
+    else:
+        display_date = data[0].get('scraped_at', 'Desconhecido')
+
     st.info(f"""
-    📅 **Base atualizada em:** {last_update}
-    \n📂 **Escopo da Pesquisa:** Monitorando as **{len(data)} últimas edições** (disponíveis na capa do portal DIOF).
-    \n*O sistema não pesquisa no acervo histórico completo, apenas nos diários mais recentes.*
+    ✅ **Sistema Verificado em:** {display_date}
+    \n📂 **Escopo:** Monitorando as **{len(data)} últimas edições** da capa do portal DIOF.
     """)
 else:
     st.warning("⚠️ Base de dados vazia.")
 
-# 2. ÁREA DE BUSCA (FORMULÁRIO)
-st.write("O que você procura?") # Label fora do input para melhor alinhamento
+# --- FORM DE BUSCA ---
+st.write("O que você procura?")
 with st.form(key='search_form'):
-    # Colunas: 80% Input | 20% Botão
     col1, col2 = st.columns([4, 1], gap="small")
-    
     with col1:
-        # label_visibility="collapsed" esconde o label padrão do Streamlit para usarmos o nosso layout
         query = st.text_input(label="Busca", placeholder="Digite Nome, CPF, Matrícula...", label_visibility="collapsed")
-    
     with col2:
-        # Botão de submissão do formulário
         submit_button = st.form_submit_button(label="🔍 Pesquisar")
 
-# 3. RESULTADOS
 if submit_button or query:
     if not query:
         st.warning("⚠️ Digite algo para pesquisar.")
@@ -300,12 +275,9 @@ if submit_button or query:
         
         if results:
             st.success(f"🔍 Encontrado em {len(results)} documentos ({duration:.3f}s)")
-            
             for res in results:
-                # Tratamento de URL
                 base_url = res['url'].strip()
                 if "?" in base_url: base_url = base_url.split("?")[0]
-
                 first_page = res['pages'][0] if res['pages'] else None
                 
                 if first_page and first_page != "9999" and first_page.isdigit():
@@ -315,8 +287,7 @@ if submit_button or query:
                     pdf_link = base_url
                     btn_text = "Abrir PDF Original"
 
-                if "9999" in res['pages']:
-                     pages_display = "Localizado no texto (Base antiga)"
+                if "9999" in res['pages']: pages_display = "Localizado no texto (Base antiga)"
                 else:
                     pages_str = ', '.join(res['pages'])
                     if len(res['pages']) > 15: pages_str = f"{', '.join(res['pages'][:15])}..."
@@ -340,11 +311,22 @@ if submit_button or query:
 </div>
 """
                 st.markdown(html_card, unsafe_allow_html=True)
-                
                 if res.get('full_text'):
                     with st.expander(f"📱 Leitura Rápida (Pág. {first_page})"):
                         st.text_area("Conteúdo:", value=res['full_text'], height=300, disabled=True, label_visibility="collapsed")
                         st.caption("Texto extraído automaticamente.")
-
         else:
             st.warning(f"O termo **'{query}'** não foi encontrado nos documentos recentes.")
+
+# --- RODAPÉ ---
+st.markdown(f"""
+<div class="footer">
+    <div class="footer-credits">
+        © {datetime.now().year} BT System • Desenvolvido por <strong>João Marcos</strong>
+    </div>
+    <div class="footer-disclaimer">
+        ⚠️ <strong>Aviso Legal:</strong> Esta aplicação é independente e <u>não possui vínculo oficial</u> com o Governo de Rondônia.<br>
+        A pesquisa utiliza apenas dados públicos disponíveis no portal <em>diof.ro.gov.br</em>.
+    </div>
+</div>
+""", unsafe_allow_html=True)
