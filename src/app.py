@@ -189,11 +189,17 @@ data = load_data()
 
 if data:
     last_update = data[0].get('scraped_at', 'Desconhecido')
-    st.info(f"📅 Base atualizada em: **{last_update}** | {len(data)} documentos indexados.")
+    
+    st.info(f"""
+    📅 **Base atualizada em:** {last_update}
+    \n📂 **Escopo da Pesquisa:** Monitorando as **{len(data)} últimas edições** (disponíveis na capa do portal DIOF).
+    \n*O sistema não pesquisa no acervo histórico completo, apenas nos diários mais recentes.*
+    """)
 else:
     st.warning("⚠️ Base de dados vazia.")
 
 query = st.text_input("O que você procura?", placeholder="Digite Nome, CPF, Matrícula...")
+
 
 if query:
     if not data:
