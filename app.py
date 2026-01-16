@@ -15,11 +15,12 @@ st.set_page_config(
 # Caminho do Banco de Dados
 DB_FILE = "dados.json"
 
-# --- CSS E ESTILOS VISUAIS ---
+# --- CSS E ESTILOS VISUAIS (Mobile Friendly) ---
 st.markdown("""
     <style>
+    /* Ajuste para o conteúdo não ficar escondido atrás do rodapé */
     .block-container { 
-        padding-top: 3rem; 
+        padding-top: 2rem; 
         padding-bottom: 8rem; 
     }
     
@@ -27,23 +28,48 @@ st.markdown("""
         display: flex; justify-content: center; align-items: center; width: 100%; margin-bottom: 20px;
     }
     
-    /* Cards de Resultado */
+    /* Card de Resultado */
     .result-card {
         background-color: rgba(37, 99, 235, 0.05); 
         border: 1px solid rgba(37, 99, 235, 0.2);
-        padding: 15px; border-radius: 10px; margin-bottom: 10px; 
+        padding: 16px; 
+        border-radius: 12px; 
+        margin-bottom: 16px; 
         border-left: 5px solid #2563eb;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
     
-    /* Snippet de texto */
+    /* Trecho do texto */
     .snippet-box {
         background: rgba(0,0,0,0.2); 
-        padding: 8px; 
-        border-radius: 5px; 
+        padding: 10px; 
+        border-radius: 6px; 
         font-family: monospace; 
         font-size: 0.85rem; 
-        margin-bottom: 8px;
+        margin: 10px 0;
         color: #e5e7eb;
+        border: 1px solid rgba(255,255,255,0.05);
+    }
+    
+    /* BOTÃO DE ABRIR PDF (Estilo Botão Real) */
+    .pdf-button {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: #2563eb;
+        color: white !important;
+        text-decoration: none;
+        padding: 10px 20px;
+        border-radius: 8px;
+        font-weight: 600;
+        transition: background 0.3s;
+        width: 100%; /* Ocupa largura total no mobile */
+        text-align: center;
+        margin-top: 10px;
+    }
+    .pdf-button:hover {
+        background-color: #1d4ed8;
+        color: white !important;
     }
     
     /* RODAPÉ FIXO */
@@ -60,7 +86,7 @@ st.markdown("""
     
     @media (prefers-color-scheme: light) {
         .result-card { background-color: #f0f9ff; border: 1px solid #bae6fd; }
-        .snippet-box { background: #f1f5f9; color: #374151; }
+        .snippet-box { background: #f1f5f9; color: #374151; border: 1px solid #e2e8f0; }
         .footer { background-color: rgba(255, 255, 255, 0.98); color: #4b5563; border-top: 1px solid #e5e7eb; }
         .footer-credits { color: #1f2937; }
     }
@@ -107,31 +133,36 @@ def search_local(term, data):
         try:
             pages = doc.get('pages_content', [])
             
-            # Compatibilidade com JSON antigo
-            if not pages and 'content' in doc:
-                if term_lower in doc['content'].lower():
-                    found_pages.append("Ver no PDF")
-                    idx = doc['content'].lower().find(term_lower)
-                    snippet = doc['content'][idx:idx+100]
-            
-            # JSON Novo (Páginas)
+            # Lógica Nova (Página a Página)
             for page in pages:
                 if term_lower in page['text'].lower():
                     found_pages.append(str(page['number']))
+                    # Pega o snippet da primeira ocorrência
                     if not snippet:
                         idx = page['text'].lower().find(term_lower)
                         start = max(0, idx - 40)
                         end = min(len(page['text']), idx + 100)
                         snippet = page['text'][start:end].replace("\n", " ")
+            
+            # Fallback (Se o JSON for antigo e não tiver 'pages_content')
+            if not found_pages and 'content' in doc:
+                 if term_lower in doc['content'].lower():
+                    found_pages.append("Verificar PDF") # Indica que achou, mas não sabe a página
+                    idx = doc['content'].lower().find(term_lower)
+                    snippet = doc['content'][idx:idx+100]
+
         except:
             continue
             
         if found_pages:
+            # Garante que não repete números de páginas
+            unique_pages = sorted(list(set(found_pages)), key=lambda x: int(x) if x.isdigit() else 9999)
+            
             results.append({
                 "title": doc['title'],
                 "url": doc['url'],
                 "date": doc.get('scraped_at', 'Data desc.'),
-                "pages": found_pages,
+                "pages": unique_pages,
                 "snippet": snippet
             })
     return results
@@ -176,26 +207,30 @@ if query:
             
             for res in results:
                 # Formatação das páginas
-                pages_str = ', '.join(res['pages'])
-                if len(res['pages']) > 10: 
-                    pages_str = f"{', '.join(res['pages'][:10])}..."
-                
-                # HTML SEM INDENTAÇÃO PARA EVITAR QUEBRA
+                if "Verificar PDF" in res['pages']:
+                     pages_display = "Localizado no texto (formato antigo)"
+                else:
+                    pages_str = ', '.join(res['pages'])
+                    if len(res['pages']) > 15: 
+                        pages_str = f"{', '.join(res['pages'][:15])}..."
+                    pages_display = f"Páginas: <strong>{pages_str}</strong>"
+
+                # ATENÇÃO: O HTML abaixo não tem recuo para não quebrar no Streamlit
                 html_card = f"""
 <div class="result-card">
-    <div style="display:flex; justify-content:space-between; align-items:center;">
-        <h3 style="margin:0; font-size:1.1rem; color:#2563eb;">📄 {res['title']}</h3>
-        <span style="font-size:0.75rem; color:#6b7280;">{res['date']}</span>
-    </div>
-    <p style="margin:8px 0; font-size:0.95rem;">
-        ✅ Páginas encontradas: <strong>{pages_str}</strong>
-    </p>
-    <div class="snippet-box">
-        ...{res['snippet']}...
-    </div>
-    <a href="{res['url']}" target="_blank" style="text-decoration:none; color:#2563eb; font-weight:bold; font-size:0.9rem;">
-        ⬇️ Abrir PDF Original
-    </a>
+<div style="display:flex; justify-content:space-between; align-items:flex-start;">
+<h3 style="margin:0; font-size:1.1rem; color:#2563eb; line-height:1.2;">📄 {res['title']}</h3>
+<span style="font-size:0.75rem; color:#6b7280; white-space:nowrap; margin-left:10px;">{res['date']}</span>
+</div>
+<p style="margin:12px 0 8px 0; font-size:0.95rem;">
+✅ {pages_display}
+</p>
+<div class="snippet-box">
+...{res['snippet']}...
+</div>
+<a href="{res['url']}" target="_blank" class="pdf-button">
+⬇️ Abrir PDF Original
+</a>
 </div>
 """
                 st.markdown(html_card, unsafe_allow_html=True)
