@@ -3,6 +3,8 @@ import json
 import os
 import base64
 from datetime import datetime
+import requests
+import time
 
 # --- CONFIGURAÇÃO DA PÁGINA ---
 st.set_page_config(
@@ -18,12 +20,43 @@ root_dir = os.path.dirname(current_dir)
 DB_FILE = os.path.join(root_dir, 'data', 'dados.json')
 LOGO_PATH = os.path.join(root_dir, 'assets', 'logo_diof.png')
 
-# --- CSS VISUAL ---
+# --- CSS VISUAL (UX APRIMORADA) ---
 st.markdown("""
     <style>
     .block-container { padding-top: 2rem; padding-bottom: 8rem; }
     .logo-container { display: flex; justify-content: center; align-items: center; width: 100%; margin-bottom: 20px; }
     
+    /* ESTILIZAÇÃO DO INPUT (Correção da Borda Vermelha) */
+    /* Estado Normal */
+    .stTextInput input {
+        border: 1px solid #cbd5e1 !important;
+        border-radius: 8px !important;
+        padding: 10px 12px !important;
+    }
+    
+    /* Estado Focado (Quando clica para digitar) - Agora é AZUL */
+    .stTextInput input:focus {
+        border: 2px solid #2563eb !important; /* Azul do tema */
+        box-shadow: none !important; /* Remove o brilho vermelho padrão */
+        outline: none !important;
+    }
+    
+    /* Botão de Pesquisar (Dentro do Form) */
+    .stButton button {
+        background-color: #2563eb !important;
+        color: white !important;
+        border-radius: 8px !important;
+        height: 46px; /* Mesma altura do input visualmente */
+        font-weight: 600 !important;
+        border: none !important;
+        width: 100%;
+        transition: background 0.3s;
+    }
+    .stButton button:hover {
+        background-color: #1d4ed8 !important;
+    }
+
+    /* Cards e Resto do Layout */
     .result-card {
         background-color: rgba(37, 99, 235, 0.05); 
         border: 1px solid rgba(37, 99, 235, 0.2);
@@ -67,6 +100,12 @@ st.markdown("""
         box-shadow: 0 6px 12px rgba(37, 99, 235, 0.3);
     }
     
+    /* Expander Mobile */
+    .streamlit-expanderHeader {
+        font-size: 0.9rem; font-weight: 600; color: #2563eb;
+        background-color: rgba(37, 99, 235, 0.05); border-radius: 8px;
+    }
+    
     .footer {
         position: fixed; left: 0; bottom: 0; width: 100%;
         background-color: rgba(14, 17, 23, 0.98);
@@ -78,13 +117,6 @@ st.markdown("""
     .footer-credits { font-size: 0.85rem; font-weight: 600; color: #d1d5db; }
     .footer-disclaimer { font-size: 0.7rem; opacity: 0.8; line-height: 1.3; }
     
-    /* Ajuste para Mobile - Expander */
-    .streamlit-expanderHeader {
-        font-size: 0.9rem;
-        font-weight: 600;
-        color: #2563eb;
-    }
-    
     @media (prefers-color-scheme: light) {
         .result-card { background-color: #f0f9ff; border: 1px solid #bae6fd; }
         .snippet-box { background: #f1f5f9; color: #374151; border: 1px solid #e2e8f0; }
@@ -93,6 +125,41 @@ st.markdown("""
     }
     </style>
 """, unsafe_allow_html=True)
+
+# --- FUNÇÃO PARA ACIONAR O GITHUB ACTIONS ---
+def trigger_update():
+    token = st.secrets.get("GITHUB_TOKEN")
+    owner = st.secrets.get("REPO_OWNER")
+    repo = st.secrets.get("REPO_NAME")
+    
+    if not token or not owner or not repo:
+        st.error("⚠️ Configuração de token ausente.")
+        return
+
+    headers = {
+        "Authorization": f"token {token}",
+        "Accept": "application/vnd.github.v3+json"
+    }
+    url = f"https://api.github.com/repos/{owner}/{repo}/actions/workflows/monitoramento_horario.yml/dispatches"
+    
+    try:
+        response = requests.post(url, json={"ref": "main"}, headers=headers)
+        if response.status_code == 204:
+            st.success("🚀 Robô iniciado! Aguarde ~2 min e recarregue.")
+        else:
+            st.error(f"Erro: {response.status_code}")
+    except Exception as e:
+        st.error(f"Erro de conexão: {e}")
+
+# --- BARRA LATERAL ---
+with st.sidebar:
+    st.header("⚙️ Painel de Controle")
+    st.write("Atualização automática a cada 30 min.")
+    st.divider()
+    st.write("**Não encontrou o que buscava?**")
+    if st.button("🔄 Forçar Atualização Agora"):
+        trigger_update()
+    st.info("Após clicar, o robô levará alguns minutos para processar novos PDFs.")
 
 # --- RODAPÉ ---
 st.markdown(f"""
@@ -128,29 +195,24 @@ def search_local(term, data):
     
     for doc in data:
         found_pages = []
-        full_text_found = "" # Armazena o texto completo da primeira página achada
+        full_text_found = "" 
         snippet = ""
         
         try:
             pages = doc.get('pages_content', [])
-            
             for page in pages:
                 if term_lower in page['text'].lower():
-                    page_num = str(page['number'])
+                    page_num = str(page['number']).strip()
                     found_pages.append(page_num)
                     
-                    # Salva o texto completo da primeira ocorrência para exibir no mobile
                     if not full_text_found:
                         full_text_found = page['text']
-                        
-                    # Snippet curto para o card
                     if not snippet:
                         idx = page['text'].lower().find(term_lower)
                         start = max(0, idx - 40)
                         end = min(len(page['text']), idx + 100)
                         snippet = page['text'][start:end].replace("\n", " ")
             
-            # Fallback Antigo
             if not found_pages and 'content' in doc:
                  if term_lower in doc['content'].lower():
                     found_pages.append("9999") 
@@ -178,7 +240,7 @@ else:
     st.markdown("""<div class="logo-container"><h1 style='color:#0068c9;'>BT</h1></div>""", unsafe_allow_html=True)
 
 st.markdown("""
-<div style="text-align:center; margin-bottom:30px; margin-top:-10px;">
+<div style="text-align:center; margin-bottom:20px; margin-top:-10px;">
     <h1 style="font-weight:800; font-size:1.8rem; margin:0;">Buscador de Termos</h1>
     <p style="font-size:0.9rem; opacity:0.7; margin-top:5px;">Monitoramento Automatizado</p>
 </div>
@@ -187,9 +249,9 @@ st.markdown("""
 # --- LÓGICA PRINCIPAL ---
 data = load_data()
 
+# 1. Info da Base (Com Escopo)
 if data:
     last_update = data[0].get('scraped_at', 'Desconhecido')
-    
     st.info(f"""
     📅 **Base atualizada em:** {last_update}
     \n📂 **Escopo da Pesquisa:** Monitorando as **{len(data)} últimas edições** (disponíveis na capa do portal DIOF).
@@ -198,11 +260,25 @@ if data:
 else:
     st.warning("⚠️ Base de dados vazia.")
 
-query = st.text_input("O que você procura?", placeholder="Digite Nome, CPF, Matrícula...")
+# 2. ÁREA DE BUSCA (FORMULÁRIO)
+st.write("O que você procura?") # Label fora do input para melhor alinhamento
+with st.form(key='search_form'):
+    # Colunas: 80% Input | 20% Botão
+    col1, col2 = st.columns([4, 1], gap="small")
+    
+    with col1:
+        # label_visibility="collapsed" esconde o label padrão do Streamlit para usarmos o nosso layout
+        query = st.text_input(label="Busca", placeholder="Digite Nome, CPF, Matrícula...", label_visibility="collapsed")
+    
+    with col2:
+        # Botão de submissão do formulário
+        submit_button = st.form_submit_button(label="🔍 Pesquisar")
 
-
-if query:
-    if not data:
+# 3. RESULTADOS
+if submit_button or query:
+    if not query:
+        st.warning("⚠️ Digite algo para pesquisar.")
+    elif not data:
         st.error("Sem dados para pesquisar.")
     else:
         start_time = datetime.now()
@@ -213,11 +289,12 @@ if query:
             st.success(f"🔍 Encontrado em {len(results)} documentos ({duration:.3f}s)")
             
             for res in results:
-                # 1. Definição do Link
+                # Tratamento de URL
                 base_url = res['url'].strip()
+                if "?" in base_url: base_url = base_url.split("?")[0]
+
                 first_page = res['pages'][0] if res['pages'] else None
                 
-                # Link com página (Funciona no Desktop)
                 if first_page and first_page != "9999" and first_page.isdigit():
                     pdf_link = f"{base_url}#page={first_page}"
                     btn_text = f"Abrir PDF na Pág. {first_page}"
@@ -225,16 +302,13 @@ if query:
                     pdf_link = base_url
                     btn_text = "Abrir PDF Original"
 
-                # 2. Exibição das Páginas
                 if "9999" in res['pages']:
                      pages_display = "Localizado no texto (Base antiga)"
                 else:
                     pages_str = ', '.join(res['pages'])
-                    if len(res['pages']) > 15: 
-                        pages_str = f"{', '.join(res['pages'][:15])}..."
+                    if len(res['pages']) > 15: pages_str = f"{', '.join(res['pages'][:15])}..."
                     pages_display = f"Página(s): <strong>{pages_str}</strong>"
 
-                # 3. Card HTML
                 html_card = f"""
 <div class="result-card">
     <div style="display:flex; justify-content:space-between; align-items:flex-start;">
@@ -254,13 +328,10 @@ if query:
 """
                 st.markdown(html_card, unsafe_allow_html=True)
                 
-                # 4. EXPANDER "MOBILE FRIENDLY" (Mostra o texto puro)
-                # Se o usuário estiver no celular e o PDF não abrir na página certa,
-                # ele pode ler o texto aqui mesmo.
                 if res.get('full_text'):
-                    with st.expander(f"📱 Visualizar Texto da Pág. {first_page}"):
-                        st.text_area("Conteúdo extraído:", value=res['full_text'], height=300, disabled=True)
-                        st.caption("Este é o texto exato extraído do PDF. Use para conferência rápida no celular.")
+                    with st.expander(f"📱 Leitura Rápida (Pág. {first_page})"):
+                        st.text_area("Conteúdo:", value=res['full_text'], height=300, disabled=True, label_visibility="collapsed")
+                        st.caption("Texto extraído automaticamente.")
 
         else:
-            st.warning(f"O termo **'{query}'** não foi encontrado.")
+            st.warning(f"O termo **'{query}'** não foi encontrado nos documentos recentes.")
