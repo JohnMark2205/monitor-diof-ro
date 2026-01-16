@@ -1,0 +1,38 @@
+name: Monitoramento Horário DIOF
+
+on:
+  schedule:
+    # Roda a cada hora cheia (Ex: 08:00, 09:00, 10:00...)
+    - cron: '0 * * * *'
+  workflow_dispatch: # Permite rodar manualmente se precisar testar
+
+permissions:
+  contents: write
+
+jobs:
+  run-scraper:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Baixar repositório
+      uses: actions/checkout@v3
+
+    - name: Configurar Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+
+    - name: Instalar dependências
+      run: |
+        pip install requests beautifulsoup4 pypdf urllib3 pytz
+
+    - name: Rodar Coletor Robusto
+      run: python coletor.py
+
+    - name: Salvar Atualização (Se houver)
+      uses: stefanzweifel/git-auto-commit-action@v4
+      with:
+        commit_message: "🚨 Novo PDF detectado no DIOF (Auto-Update)"
+        file_pattern: dados.json
+        skip_dirty_check: false 
+        # O skip_dirty_check false garante que ele só commita SE o arquivo mudar
