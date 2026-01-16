@@ -12,31 +12,72 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# --- CONFIGURAÇÃO DE CAMINHOS (NOVO) ---
-# Pega o diretório do app.py: .../src
+# --- CONFIGURAÇÃO DE CAMINHOS ---
 current_dir = os.path.dirname(os.path.abspath(__file__))
-# Sobe um nível: .../
 root_dir = os.path.dirname(current_dir)
-
-# Caminhos absolutos baseados na estrutura
 DB_FILE = os.path.join(root_dir, 'data', 'dados.json')
 LOGO_PATH = os.path.join(root_dir, 'assets', 'logo_diof.png')
 
-# --- CSS E ESTILOS VISUAIS ---
+# --- CSS VISUAL ---
 st.markdown("""
     <style>
-    /* ... (MANTENHA TODO O SEU CSS IGUAL AQUI) ... */
-    /* Vou omitir o CSS para economizar espaço, pode manter o da V8.2 */
     .block-container { padding-top: 2rem; padding-bottom: 8rem; }
     .logo-container { display: flex; justify-content: center; align-items: center; width: 100%; margin-bottom: 20px; }
-    .result-card { background-color: rgba(37, 99, 235, 0.05); border: 1px solid rgba(37, 99, 235, 0.2); padding: 16px; border-radius: 12px; margin-bottom: 16px; border-left: 5px solid #2563eb; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-    .snippet-box { background: rgba(0,0,0,0.2); padding: 12px; border-radius: 8px; font-family: monospace; font-size: 0.85rem; margin: 12px 0; color: #e5e7eb; border: 1px solid rgba(255,255,255,0.05); line-height: 1.4; }
-    .pdf-button { display: block; width: 100%; background-color: #2563eb; color: white !important; text-decoration: none !important; padding: 12px 0; border-radius: 8px; font-weight: 600; text-align: center; margin-top: 15px; border: none; box-shadow: 0 4px 6px rgba(37, 99, 235, 0.2); transition: all 0.2s ease-in-out; }
-    .pdf-button:hover { background-color: #1d4ed8; transform: translateY(-2px); box-shadow: 0 6px 12px rgba(37, 99, 235, 0.3); }
-    .pdf-button:active { transform: translateY(0); box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2); }
-    .footer { position: fixed; left: 0; bottom: 0; width: 100%; background-color: rgba(14, 17, 23, 0.98); color: #9ca3af; text-align: center; padding: 15px 20px; z-index: 99999; border-top: 1px solid rgba(255,255,255,0.1); display: flex; flex-direction: column; gap: 5px; backdrop-filter: blur(5px); }
+    
+    .result-card {
+        background-color: rgba(37, 99, 235, 0.05); 
+        border: 1px solid rgba(37, 99, 235, 0.2);
+        padding: 16px; 
+        border-radius: 12px; 
+        margin-bottom: 16px; 
+        border-left: 5px solid #2563eb;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    
+    .snippet-box {
+        background: rgba(0,0,0,0.2); 
+        padding: 12px; 
+        border-radius: 8px; 
+        font-family: monospace; 
+        font-size: 0.85rem; 
+        margin: 12px 0;
+        color: #e5e7eb;
+        border: 1px solid rgba(255,255,255,0.05);
+        line-height: 1.4;
+    }
+    
+    .pdf-button {
+        display: block;
+        width: 100%;
+        background-color: #2563eb;
+        color: white !important;
+        text-decoration: none !important;
+        padding: 12px 0;
+        border-radius: 8px;
+        font-weight: 600;
+        text-align: center;
+        margin-top: 15px;
+        border: none;
+        box-shadow: 0 4px 6px rgba(37, 99, 235, 0.2);
+        transition: all 0.2s ease-in-out;
+    }
+    .pdf-button:hover {
+        background-color: #1d4ed8;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 12px rgba(37, 99, 235, 0.3);
+    }
+    
+    .footer {
+        position: fixed; left: 0; bottom: 0; width: 100%;
+        background-color: rgba(14, 17, 23, 0.98);
+        color: #9ca3af; text-align: center; padding: 15px 20px; 
+        z-index: 99999; border-top: 1px solid rgba(255,255,255,0.1);
+        display: flex; flex-direction: column; gap: 5px;
+        backdrop-filter: blur(5px);
+    }
     .footer-credits { font-size: 0.85rem; font-weight: 600; color: #d1d5db; }
     .footer-disclaimer { font-size: 0.7rem; opacity: 0.8; line-height: 1.3; }
+    
     @media (prefers-color-scheme: light) {
         .result-card { background-color: #f0f9ff; border: 1px solid #bae6fd; }
         .snippet-box { background: #f1f5f9; color: #374151; border: 1px solid #e2e8f0; }
@@ -75,7 +116,6 @@ def load_data():
     except: return []
 
 def search_local(term, data):
-    # ... (MANTENHA A LÓGICA DE BUSCA IGUAL À V8.2) ...
     results = []
     term_lower = term.lower()
     
@@ -93,6 +133,7 @@ def search_local(term, data):
                         end = min(len(page['text']), idx + 100)
                         snippet = page['text'][start:end].replace("\n", " ")
             
+            # Fallback para base antiga
             if not found_pages and 'content' in doc:
                  if term_lower in doc['content'].lower():
                     found_pages.append("9999") 
@@ -111,15 +152,14 @@ def search_local(term, data):
             })
     return results
 
-# --- HEADER (Com caminho novo) ---
-img_b64 = get_base64_image(LOGO_PATH) # Usa a variável atualizada
+# --- HEADER ---
+img_b64 = get_base64_image(LOGO_PATH)
 
 if img_b64:
     st.markdown(f"""<div class="logo-container"><img src="data:image/png;base64,{img_b64}" width="150" style="border-radius:8px;"></div>""", unsafe_allow_html=True)
 else:
     st.markdown("""<div class="logo-container"><h1 style='color:#0068c9;'>BT</h1></div>""", unsafe_allow_html=True)
 
-# ... (RESTO DO CÓDIGO DA INTERFACE VISUAL IGUAL V8.2) ...
 st.markdown("""
 <div style="text-align:center; margin-bottom:30px; margin-top:-10px;">
     <h1 style="font-weight:800; font-size:1.8rem; margin:0;">Buscador de Termos</h1>
@@ -127,6 +167,7 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
+# --- LÓGICA PRINCIPAL ---
 data = load_data()
 
 if data:
@@ -149,11 +190,19 @@ if query:
             st.success(f"🔍 Encontrado em {len(results)} documentos ({duration:.3f}s)")
             
             for res in results:
-                pdf_link = res['url']
+                # 1. Limpeza do URL (Importante para evitar quebra de link)
+                base_url = res['url'].strip() 
+                
+                # 2. Definição da Página e Link
                 first_page = res['pages'][0] if res['pages'] else None
+                
+                # Só adiciona #page=X se for um número válido e não for o código 9999
                 if first_page and first_page != "9999" and first_page.isdigit():
-                    pdf_link = f"{res['url']}#page={first_page}"
+                    pdf_link = f"{base_url}#page={first_page}"
+                else:
+                    pdf_link = base_url
 
+                # 3. Texto de Exibição das Páginas
                 if "9999" in res['pages']:
                      pages_display = "Página: Não identificada (Necessário limpar base antiga)"
                 else:
@@ -162,6 +211,7 @@ if query:
                         pages_str = f"{', '.join(res['pages'][:15])}..."
                     pages_display = f"Página(s): <strong>{pages_str}</strong>"
 
+                # 4. Renderização do Card
                 html_card = f"""
 <div class="result-card">
 <div style="display:flex; justify-content:space-between; align-items:flex-start;">
