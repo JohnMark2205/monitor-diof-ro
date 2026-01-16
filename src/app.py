@@ -24,7 +24,7 @@ LOGO_PATH = os.path.join(root_dir, 'assets', 'logo_diof.png')
 # --- LINK DO FORMULÁRIO DE CONTATO ---
 CONTACT_FORM_URL = "https://forms.gle/ZyjbbLg47n6uVNAz9"
 
-# --- CSS VISUAL ---
+# --- CSS VISUAL (ADAPTATIVO) ---
 st.markdown("""
     <style>
     /* 1. LAYOUT GERAL */
@@ -45,7 +45,8 @@ st.markdown("""
         height: auto;
     }
 
-    /* 3. INPUTS (Busca) */
+    /* 3. INPUTS (ADAPTATIVO) */
+    /* Regra Base (Serve para Dark Mode) */
     div[data-baseweb="input"] {
         background-color: transparent !important;
         border: 1px solid rgba(255, 255, 255, 0.2) !important;
@@ -56,7 +57,7 @@ st.markdown("""
         box-shadow: none !important;
     }
     .stTextInput input {
-        color: #ffffff !important;
+        color: #ffffff !important; /* Branco no Dark Mode */
         caret-color: #2563eb !important;
     }
     
@@ -74,7 +75,7 @@ st.markdown("""
     }
     .stButton button:hover { background-color: #1d4ed8 !important; }
 
-    /* 5. CARDS DE RESULTADO */
+    /* 5. CARDS DE RESULTADO (ADAPTATIVO) */
     .result-card {
         background-color: rgba(37, 99, 235, 0.05); 
         border: 1px solid rgba(37, 99, 235, 0.2);
@@ -104,31 +105,32 @@ st.markdown("""
         background-color: rgba(37, 99, 235, 0.05); border-radius: 8px;
     }
     
-    /* 6. --- NOVA LEITURA RÁPIDA (Mobile Friendly) --- */
+    /* 6. LEITURA RÁPIDA (ADAPTATIVO & SCROLL FIX) */
     .mobile-read-box {
-        background-color: rgba(0, 0, 0, 0.3); /* Fundo escuro para destacar */
-        color: #f8fafc !important; /* Branco Gelo (Muito legível) */
+        /* Configuração Base (Dark Mode) */
+        background-color: #1e293b; /* Cinza Escuro (Slate-800) */
+        color: #e2e8f0;            /* Branco Suave */
+        
         padding: 16px;
         border-radius: 8px;
-        border: 1px solid rgba(255, 255, 255, 0.15);
+        border: 1px solid rgba(255, 255, 255, 0.1);
         
-        font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+        font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
         font-size: 0.95rem;
-        line-height: 1.6; /* Mais espaço entre linhas para não cansar a vista */
+        line-height: 1.6;
         
-        max-height: 400px; /* Altura máxima */
-        overflow-y: auto;  /* Scroll nativo suave */
-        white-space: pre-wrap; /* Mantém parágrafos originais */
+        max-height: 400px;
+        overflow-y: auto;          /* Scroll Ativo */
+        -webkit-overflow-scrolling: touch; /* ESSENCIAL PARA IPHONE */
+        white-space: pre-wrap;
         
         margin-top: 10px;
-        box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
     }
-    /* Scrollbar Bonita para o Leitor */
+    /* Scrollbar */
     .mobile-read-box::-webkit-scrollbar { width: 6px; }
     .mobile-read-box::-webkit-scrollbar-track { background: transparent; }
     .mobile-read-box::-webkit-scrollbar-thumb { background-color: #475569; border-radius: 10px; }
-    /* --- FIM --- */
-    
+
     .status-highlight { color: #34d399; font-weight: 600; }
     
     /* FOOTER */
@@ -141,14 +143,36 @@ st.markdown("""
     .footer-credits { font-size: 0.85rem; font-weight: 600; color: #d1d5db; }
     .footer-disclaimer { font-size: 0.7rem; opacity: 0.8; line-height: 1.3; }
     
+    /* --- MEDIA QUERY: MODO CLARO (LIGHT MODE) --- */
     @media (prefers-color-scheme: light) {
-        .result-card { background-color: #f0f9ff; border: 1px solid #bae6fd; }
-        .snippet-box { background: #f1f5f9; color: #374151; border: 1px solid #e2e8f0; }
-        .mobile-read-box { background-color: #ffffff; color: #1e293b !important; border: 1px solid #cbd5e1; }
+        /* Fundo do Card */
+        .result-card { background-color: #f8fafc; border: 1px solid #e2e8f0; }
+        
+        /* Box de código (Snippet) */
+        .snippet-box { background: #f1f5f9; color: #334155; border: 1px solid #cbd5e1; }
+        
+        /* Input de Busca (CORREÇÃO DO TEXTO INVISÍVEL) */
+        div[data-baseweb="input"] { 
+            background-color: #ffffff !important; 
+            border: 1px solid #cbd5e1 !important; 
+        }
+        .stTextInput input { 
+            color: #1e293b !important; /* TEXTO ESCURO */
+        } 
+        
+        /* Box de Leitura Rápida no Light Mode */
+        .mobile-read-box {
+            background-color: #ffffff; /* Fundo Branco */
+            color: #1e293b;            /* Texto Escuro */
+            border: 1px solid #cbd5e1;
+        }
+        .mobile-read-box::-webkit-scrollbar-thumb { background-color: #cbd5e1; }
+
+        /* Footer */
         .footer { background-color: rgba(255, 255, 255, 0.98); color: #4b5563; border-top: 1px solid #e5e7eb; }
         .footer-credits { color: #1f2937; }
-        .stTextInput input { color: #1e293b !important; } 
-        div[data-baseweb="input"] { border: 1px solid #cbd5e1 !important; }
+        
+        /* Status */
         .status-highlight { color: #059669; }
     }
     </style>
@@ -319,10 +343,9 @@ if submit_button or query:
 """
                 st.markdown(html_card, unsafe_allow_html=True)
                 
-                # --- LEITURA RÁPIDA ATUALIZADA (DIV HTML) ---
+                # --- LEITURA RÁPIDA (ADAPTATIVA) ---
                 if res.get('full_text'):
                     with st.expander(f"📱 Leitura Rápida (Pág. {first_page})"):
-                        # Substituindo st.text_area por HTML puro estilizado
                         st.markdown(f"""
                         <div class="mobile-read-box">
                             {res['full_text']}
