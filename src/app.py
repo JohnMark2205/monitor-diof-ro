@@ -24,7 +24,7 @@ LOGO_PATH = os.path.join(root_dir, 'assets', 'logo_diof.png')
 # --- LINK DO FORMULÁRIO DE CONTATO ---
 CONTACT_FORM_URL = "https://forms.gle/ZyjbbLg47n6uVNAz9"
 
-# --- CSS VISUAL (V22 - SCROLL FIX) ---
+# --- CSS VISUAL (V23 - SCROLL AZUL VIBRANTE) ---
 st.markdown("""
     <style>
     /* 1. LAYOUT GERAL */
@@ -74,7 +74,7 @@ st.markdown("""
         box-shadow: 0 2px 4px rgba(0,0,0,0.05);
     }
     
-    /* 6. SNIPPET DE TEXTO (Sempre Escuro) */
+    /* 6. SNIPPET DE TEXTO */
     .snippet-box {
         background: #1e293b; 
         color: #e2e8f0;      
@@ -95,10 +95,10 @@ st.markdown("""
         box-shadow: 0 4px 6px rgba(37, 99, 235, 0.2); transition: all 0.2s ease-in-out;
     }
     
-    /* 8. LEITURA RÁPIDA (Sempre Escuro + Scroll Contrastante) */
+    /* 8. LEITURA RÁPIDA (SCROLLBAR AZUL) */
     .mobile-read-box {
-        background-color: #0f172a; /* Fundo Preto/Azulado */
-        color: #f1f5f9;            /* Texto Branco Gelo */
+        background-color: #0f172a; /* Fundo Escuro */
+        color: #f1f5f9;            /* Texto Claro */
         padding: 16px;
         border-radius: 8px;
         border: 1px solid #334155;
@@ -110,23 +110,27 @@ st.markdown("""
         -webkit-overflow-scrolling: touch; 
         white-space: pre-wrap;
         margin-top: 10px;
+        
+        /* Suporte Firefox */
+        scrollbar-width: thin;
+        scrollbar-color: #2563eb #0f172a; /* Azul no Escuro */
     }
     
-    /* --- CORREÇÃO DO SCROLL (ALTO CONTRASTE) --- */
+    /* SCROLLBAR WEBKIT (Chrome, Safari, Edge) */
     .mobile-read-box::-webkit-scrollbar { 
-        width: 10px; /* Um pouco mais larga para facilitar o toque */
+        width: 10px; 
     }
     .mobile-read-box::-webkit-scrollbar-track { 
-        background: #1e293b; /* Fundo do trilho escuro */
-        border-radius: 4px; 
+        background: #0f172a; /* Fundo do trilho escuro */
+        border-radius: 4px;
     }
     .mobile-read-box::-webkit-scrollbar-thumb { 
-        background-color: #cbd5e1; /* CINZA CLARO (Pop visual contra o fundo escuro) */
-        border: 2px solid #1e293b; /* Borda escura ao redor para destacar */
+        background-color: #2563eb !important; /* AZUL VIBRANTE (Igual ao botão) */
         border-radius: 6px; 
+        border: 2px solid #0f172a; /* Borda para separar do fundo */
     }
     .mobile-read-box::-webkit-scrollbar-thumb:hover {
-        background-color: #ffffff; /* Fica branco puro ao passar o mouse/tocar */
+        background-color: #3b82f6 !important; /* Azul mais claro ao passar mouse */
     }
 
     .streamlit-expanderHeader {
