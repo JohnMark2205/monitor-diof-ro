@@ -20,51 +20,52 @@ root_dir = os.path.dirname(current_dir)
 DB_FILE = os.path.join(root_dir, 'data', 'dados.json')
 LOGO_PATH = os.path.join(root_dir, 'assets', 'logo_diof.png')
 
-# --- CSS VISUAL (UX APRIMORADA - CORREÇÃO BORDA) ---
+# --- CSS VISUAL (CORREÇÃO DE CORES DARK MODE) ---
 st.markdown("""
     <style>
     .block-container { padding-top: 2rem; padding-bottom: 8rem; }
     .logo-container { display: flex; justify-content: center; align-items: center; width: 100%; margin-bottom: 20px; }
     
-    /* --- CORREÇÃO DEFINITIVA DO INPUT --- */
+    /* --- CORREÇÃO DO INPUT (DARK MODE) --- */
     
-    /* 1. Estiliza o Container do Input (A caixa de fora) */
+    /* 1. Container do Input (A caixa) */
     div[data-baseweb="input"] {
-        border: 1px solid #cbd5e1 !important; /* Borda cinza suave padrão */
+        background-color: transparent !important; /* Usa o fundo do tema escuro */
+        border: 1px solid rgba(255, 255, 255, 0.2) !important; /* Borda sutil branca */
         border-radius: 8px !important;
-        background-color: white !important;
     }
 
-    /* 2. Quando o usuário clica (Foco) */
+    /* 2. Quando clica (Foco) */
     div[data-baseweb="input"]:focus-within {
         border: 2px solid #2563eb !important; /* Azul Profissional */
-        box-shadow: none !important; /* REMOVE A SOMBRA VERMELHA DO STREAMLIT */
+        box-shadow: none !important;
     }
 
-    /* 3. Ajuste do texto interno para não quebrar */
+    /* 3. Texto digitado (A CORREÇÃO PRINCIPAL) */
     .stTextInput input {
-        color: #1e293b !important;
+        color: #ffffff !important; /* TEXTO BRANCO */
+        caret-color: #2563eb !important; /* Cursor azul */
     }
     
-    /* --- FIM DA CORREÇÃO DO INPUT --- */
+    /* --- FIM DA CORREÇÃO --- */
     
     /* Botão de Pesquisar */
     .stButton button {
         background-color: #2563eb !important;
         color: white !important;
         border-radius: 8px !important;
-        height: 48px; /* Ajuste fino para alinhar com a altura do input */
+        height: 48px;
         font-weight: 600 !important;
         border: none !important;
         width: 100%;
         transition: background 0.3s;
-        margin-top: 1px; /* Pequeno ajuste de alinhamento vertical */
+        margin-top: 1px;
     }
     .stButton button:hover {
         background-color: #1d4ed8 !important;
     }
 
-    /* Cards e Layout */
+    /* Cards */
     .result-card {
         background-color: rgba(37, 99, 235, 0.05); 
         border: 1px solid rgba(37, 99, 235, 0.2);
@@ -75,6 +76,7 @@ st.markdown("""
         box-shadow: 0 2px 4px rgba(0,0,0,0.05);
     }
     
+    /* Snippet Box */
     .snippet-box {
         background: rgba(0,0,0,0.2); 
         padding: 12px; 
@@ -108,7 +110,6 @@ st.markdown("""
         box-shadow: 0 6px 12px rgba(37, 99, 235, 0.3);
     }
     
-    /* Expander Mobile */
     .streamlit-expanderHeader {
         font-size: 0.9rem; font-weight: 600; color: #2563eb;
         background-color: rgba(37, 99, 235, 0.05); border-radius: 8px;
@@ -130,6 +131,9 @@ st.markdown("""
         .snippet-box { background: #f1f5f9; color: #374151; border: 1px solid #e2e8f0; }
         .footer { background-color: rgba(255, 255, 255, 0.98); color: #4b5563; border-top: 1px solid #e5e7eb; }
         .footer-credits { color: #1f2937; }
+        /* Ajuste do input para modo claro (caso o usuário troque) */
+        .stTextInput input { color: #1e293b !important; } 
+        div[data-baseweb="input"] { border: 1px solid #cbd5e1 !important; }
     }
     </style>
 """, unsafe_allow_html=True)
