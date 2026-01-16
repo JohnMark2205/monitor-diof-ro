@@ -24,7 +24,7 @@ LOGO_PATH = os.path.join(root_dir, 'assets', 'logo_diof.png')
 # --- LINK DO FORMULÁRIO DE CONTATO ---
 CONTACT_FORM_URL = "https://forms.gle/ZyjbbLg47n6uVNAz9"
 
-# --- CSS VISUAL (V23 - SCROLL AZUL VIBRANTE) ---
+# --- CSS VISUAL (V24 - PAGINAÇÃO DINÂMICA) ---
 st.markdown("""
     <style>
     /* 1. LAYOUT GERAL */
@@ -38,18 +38,14 @@ st.markdown("""
     .logo-box img { max-width: 300px; width: 80%; height: auto; }
 
     /* 3. INPUTS */
-    div[data-baseweb="input"] {
-        border-radius: 8px !important;
-    }
+    div[data-baseweb="input"] { border-radius: 8px !important; }
     div[data-baseweb="input"]:focus-within {
         border: 2px solid #2563eb !important;
         box-shadow: none !important;
     }
-    .stTextInput input {
-        caret-color: #2563eb !important;
-    }
+    .stTextInput input { caret-color: #2563eb !important; }
     
-    /* 4. BOTÕES */
+    /* 4. BOTÕES GERAIS */
     .stButton button {
         background-color: #2563eb !important;
         color: white !important;
@@ -63,13 +59,13 @@ st.markdown("""
     }
     .stButton button:hover { background-color: #1d4ed8 !important; }
 
-    /* 5. CARDS */
+    /* 5. CARDS DE RESULTADO */
     .result-card {
         background-color: rgba(37, 99, 235, 0.05); 
         border: 1px solid rgba(37, 99, 235, 0.2);
         padding: 16px; 
         border-radius: 12px; 
-        margin-bottom: 16px; 
+        margin-bottom: 10px; /* Reduzi margem pois agora tem controles dentro */
         border-left: 5px solid #2563eb;
         box-shadow: 0 2px 4px rgba(0,0,0,0.05);
     }
@@ -87,18 +83,21 @@ st.markdown("""
         line-height: 1.4;
     }
     
-    /* 7. BOTÃO PDF */
+    /* 7. BOTÃO PDF (Dentro do HTML) */
     .pdf-button {
         display: block; width: 100%; background-color: #2563eb; color: white !important;
         text-decoration: none !important; padding: 12px 0; border-radius: 8px;
         font-weight: 600; text-align: center; margin-top: 15px; border: none;
         box-shadow: 0 4px 6px rgba(37, 99, 235, 0.2); transition: all 0.2s ease-in-out;
     }
+    .pdf-button:hover {
+        background-color: #1d4ed8; transform: translateY(-2px);
+    }
     
     /* 8. LEITURA RÁPIDA (SCROLLBAR AZUL) */
     .mobile-read-box {
-        background-color: #0f172a; /* Fundo Escuro */
-        color: #f1f5f9;            /* Texto Claro */
+        background-color: #0f172a; 
+        color: #f1f5f9;            
         padding: 16px;
         border-radius: 8px;
         border: 1px solid #334155;
@@ -110,27 +109,15 @@ st.markdown("""
         -webkit-overflow-scrolling: touch; 
         white-space: pre-wrap;
         margin-top: 10px;
-        
-        /* Suporte Firefox */
         scrollbar-width: thin;
-        scrollbar-color: #2563eb #0f172a; /* Azul no Escuro */
+        scrollbar-color: #2563eb #0f172a;
     }
-    
-    /* SCROLLBAR WEBKIT (Chrome, Safari, Edge) */
-    .mobile-read-box::-webkit-scrollbar { 
-        width: 10px; 
-    }
-    .mobile-read-box::-webkit-scrollbar-track { 
-        background: #0f172a; /* Fundo do trilho escuro */
-        border-radius: 4px;
-    }
+    .mobile-read-box::-webkit-scrollbar { width: 10px; }
+    .mobile-read-box::-webkit-scrollbar-track { background: #0f172a; border-radius: 4px; }
     .mobile-read-box::-webkit-scrollbar-thumb { 
-        background-color: #2563eb !important; /* AZUL VIBRANTE (Igual ao botão) */
+        background-color: #2563eb !important; 
         border-radius: 6px; 
-        border: 2px solid #0f172a; /* Borda para separar do fundo */
-    }
-    .mobile-read-box::-webkit-scrollbar-thumb:hover {
-        background-color: #3b82f6 !important; /* Azul mais claro ao passar mouse */
+        border: 2px solid #0f172a; 
     }
 
     .streamlit-expanderHeader {
@@ -138,9 +125,33 @@ st.markdown("""
         background-color: rgba(37, 99, 235, 0.05); border-radius: 8px;
     }
 
+    /* 9. ESTILO DO SELETOR DE PÁGINAS (ST.RADIO) */
+    /* Deixa o radio button com cara de botões de navegação */
+    div[role="radiogroup"] {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 10px;
+    }
+    div[role="radiogroup"] label {
+        background-color: rgba(37, 99, 235, 0.1);
+        border: 1px solid rgba(37, 99, 235, 0.3);
+        padding: 4px 12px;
+        border-radius: 20px;
+        cursor: pointer;
+        transition: all 0.2s;
+        font-size: 0.85rem;
+    }
+    div[role="radiogroup"] label:hover {
+        background-color: rgba(37, 99, 235, 0.2);
+    }
+    /* Item Selecionado */
+    div[role="radiogroup"] label[data-baseweb="radio"] > div:first-child {
+        background-color: #2563eb;
+    }
+
     .status-highlight { color: #34d399; font-weight: 600; }
     
-    /* FOOTER */
     .footer {
         position: fixed; left: 0; bottom: 0; width: 100%;
         background-color: rgba(14, 17, 23, 0.98); color: #9ca3af; text-align: center;
@@ -150,7 +161,6 @@ st.markdown("""
     .footer-credits { font-size: 0.85rem; font-weight: 600; color: #d1d5db; }
     .footer-disclaimer { font-size: 0.7rem; opacity: 0.8; line-height: 1.3; }
     
-    /* MODO LIGHT (Apenas ajustes de fundo da página) */
     @media (prefers-color-scheme: light) {
         .result-card { background-color: #f8fafc; border: 1px solid #e2e8f0; }
         .footer { background-color: rgba(255, 255, 255, 0.98); color: #4b5563; border-top: 1px solid #e5e7eb; }
@@ -181,40 +191,52 @@ def load_status():
         with open(STATUS_FILE, "r", encoding="utf-8") as f: return json.load(f)
     except: return None
 
+# --- NOVA LÓGICA DE BUSCA: CAPTURA MÚLTIPLAS PÁGINAS ---
 def search_local(term, data):
     results = []
     term_lower = term.lower()
+    
     for doc in data:
-        found_pages = []
-        full_text_found = "" 
+        matches_map = {} # Dicionário: {'15': 'Texto completo da pág 15', '20': 'Texto da 20'}
         snippet = ""
+        found_any = False
+        
         try:
             pages = doc.get('pages_content', [])
             for page in pages:
                 if term_lower in page['text'].lower():
                     page_num = str(page['number']).strip()
-                    found_pages.append(page_num)
-                    if not full_text_found: full_text_found = page['text']
+                    # Salva o texto desta página específica
+                    matches_map[page_num] = page['text']
+                    found_any = True
+                    
+                    # Gera um snippet só da primeira ocorrência para mostrar no card principal
                     if not snippet:
                         idx = page['text'].lower().find(term_lower)
                         start = max(0, idx - 40)
                         end = min(len(page['text']), idx + 100)
                         snippet = page['text'][start:end].replace("\n", " ")
-            if not found_pages and 'content' in doc:
+
+            # Fallback para dados antigos (sem pages_content separado)
+            if not found_any and 'content' in doc:
                  if term_lower in doc['content'].lower():
-                    found_pages.append("9999") 
+                    matches_map["9999"] = doc['content'] # 9999 indica "texto corrido"
                     idx = doc['content'].lower().find(term_lower)
                     snippet = doc['content'][idx:idx+100]
+                    found_any = True
         except: continue
-        if found_pages:
-            unique_pages = sorted(list(set(found_pages)), key=lambda x: int(x) if x.isdigit() else 9999)
+            
+        if found_any:
+            # Ordena as páginas encontradas (numérico)
+            sorted_pages = sorted(matches_map.keys(), key=lambda x: int(x) if x.isdigit() else 9999)
+            
             results.append({
                 "title": doc['title'],
                 "url": doc['url'],
                 "date": doc.get('scraped_at', 'Data desc.'),
-                "pages": unique_pages,
-                "snippet": snippet,
-                "full_text": full_text_found
+                "matches": matches_map,      # Mapeamento completo
+                "pages": sorted_pages,       # Lista ordenada de páginas
+                "snippet": snippet           # Trecho para o card
             })
     return results
 
@@ -288,53 +310,76 @@ if submit_button or query:
         
         if results:
             st.success(f"🔍 Encontrado em {len(results)} documentos ({duration:.3f}s)")
-            for res in results:
+            
+            # --- LOOP DE RESULTADOS ---
+            for i, res in enumerate(results):
                 base_url = res['url'].strip()
                 if "?" in base_url: base_url = base_url.split("?")[0]
-                first_page = res['pages'][0] if res['pages'] else None
                 
-                if first_page and first_page != "9999" and first_page.isdigit():
-                    pdf_link = f"{base_url}#page={first_page}"
-                    btn_text = f"Abrir PDF na Pág. {first_page}"
+                # --- INTERATIVIDADE: SELETOR DE PÁGINAS ---
+                # Se tiver mais de uma página, mostra o seletor. Se só tem uma, seleciona ela direto.
+                available_pages = res['pages']
+                selected_page_num = available_pages[0] # Padrão: primeira encontrada
+                
+                # HTML do Card (Topo)
+                card_header = f"""
+                <div class="result-card">
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                        <h3 style="margin:0; font-size:1.1rem; color:#2563eb; line-height:1.2;">📄 {res['title']}</h3>
+                        <span style="font-size:0.75rem; color:#6b7280; white-space:nowrap; margin-left:10px;">{res['date']}</span>
+                    </div>
+                """
+                st.markdown(card_header, unsafe_allow_html=True)
+                
+                # WIDGET DE SELEÇÃO (INTERATIVO)
+                # Usamos st.radio horizontal para parecer "tabs" ou botões
+                if len(available_pages) > 1:
+                    st.write(f"**Encontrado em {len(available_pages)} páginas.** Selecione para visualizar:")
+                    # Unique key é crucial aqui! Usamos URL + Index do loop
+                    selected_page_num = st.radio(
+                        "Selecione a página:",
+                        options=available_pages,
+                        horizontal=True,
+                        label_visibility="collapsed",
+                        key=f"page_sel_{i}_{base_url}"
+                    )
                 else:
-                    pdf_link = base_url
+                    st.caption(f"Encontrado na Página: **{selected_page_num}**")
+
+                # --- LÓGICA DINÂMICA (BASEADA NA SELEÇÃO) ---
+                # 1. Determina o Link
+                if selected_page_num != "9999" and selected_page_num.isdigit():
+                    dynamic_link = f"{base_url}#page={selected_page_num}"
+                    btn_text = f"Abrir PDF na Pág. {selected_page_num}"
+                else:
+                    dynamic_link = base_url
                     btn_text = "Abrir PDF Original"
-
-                if "9999" in res['pages']: pages_display = "Localizado no texto (Base antiga)"
-                else:
-                    pages_str = ', '.join(res['pages'])
-                    if len(res['pages']) > 15: pages_str = f"{', '.join(res['pages'][:15])}..."
-                    pages_display = f"Página(s): <strong>{pages_str}</strong>"
-
-                html_card = f"""
-<div class="result-card">
-    <div style="display:flex; justify-content:space-between; align-items:flex-start;">
-        <h3 style="margin:0; font-size:1.1rem; color:#2563eb; line-height:1.2;">📄 {res['title']}</h3>
-        <span style="font-size:0.75rem; color:#6b7280; white-space:nowrap; margin-left:10px;">{res['date']}</span>
-    </div>
-    <p style="margin:12px 0 8px 0; font-size:0.95rem;">
-        ✅ {pages_display}
-    </p>
-    <div class="snippet-box">
-        ...{res['snippet']}...
-    </div>
-    <a href="{pdf_link}" target="_blank" class="pdf-button">
-        {btn_text}
-    </a>
-</div>
-"""
-                st.markdown(html_card, unsafe_allow_html=True)
                 
-                if res.get('full_text'):
-                    with st.expander(f"📱 Leitura Rápida (Pág. {first_page})"):
-                        st.markdown(f"""
-                        <div class="mobile-read-box">
-                            {res['full_text']}
-                        </div>
-                        <p style="font-size:0.7rem; color:#9ca3af; margin-top:5px; text-align:center;">
-                            Texto extraído automaticamente. Role para ler.
-                        </p>
-                        """, unsafe_allow_html=True)
+                # 2. Determina o Texto Completo
+                full_text_display = res['matches'].get(selected_page_num, "Texto não disponível.")
+
+                # HTML do Card (Parte de baixo com botão dinâmico)
+                card_footer = f"""
+                    <div class="snippet-box">
+                        ...{res['snippet']}...
+                    </div>
+                    <a href="{dynamic_link}" target="_blank" class="pdf-button">
+                        {btn_text}
+                    </a>
+                </div>
+                """
+                st.markdown(card_footer, unsafe_allow_html=True)
+                
+                # EXPANDER DE LEITURA (DINÂMICO)
+                with st.expander(f"📱 Leitura Rápida (Pág. {selected_page_num})"):
+                    st.markdown(f"""
+                    <div class="mobile-read-box">
+                        {full_text_display}
+                    </div>
+                    <p style="font-size:0.7rem; color:#9ca3af; margin-top:5px; text-align:center;">
+                        Texto extraído da página {selected_page_num}. Role para ler.
+                    </p>
+                    """, unsafe_allow_html=True)
         else:
             st.warning(f"O termo **'{query}'** não foi encontrado nos documentos recentes.")
 
