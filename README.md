@@ -23,7 +23,7 @@ Diferente da busca tradicional, que exige o download manual de arquivos pesados,
 
 ## 📸 Screenshots
 
-![Interface Principal](caminho/para/seu/print_da_tela.png)
+![Interface Principal](assets/tela_inicial.png)
 *Interface de busca com resultados detalhados e botões de ação.*
 
 ## 🛠️ Tecnologias Utilizadas
