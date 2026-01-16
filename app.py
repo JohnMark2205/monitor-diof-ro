@@ -17,7 +17,7 @@ DB_FILE = "dados.json"
 # --- CSS E ESTILOS VISUAIS ---
 st.markdown("""
     <style>
-    /* Layout Mobile Friendly */
+    /* Layout Mobile */
     .block-container { 
         padding-top: 2rem; 
         padding-bottom: 8rem; 
@@ -36,7 +36,6 @@ st.markdown("""
         margin-bottom: 16px; 
         border-left: 5px solid #2563eb;
         box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-        transition: transform 0.2s ease;
     }
     
     /* Snippet (Trecho do texto) */
@@ -52,13 +51,13 @@ st.markdown("""
         line-height: 1.4;
     }
     
-    /* BOTÃO MODERNO (Clean & Hover Effect) */
+    /* BOTÃO CLEAN (Sem ícone, com hover) */
     .pdf-button {
         display: block;
         width: 100%;
         background-color: #2563eb;
-        color: white !important; /* Força cor branca */
-        text-decoration: none !important; /* Remove sublinhado */
+        color: white !important;
+        text-decoration: none !important; /* Tira o sublinhado */
         padding: 12px 0;
         border-radius: 8px;
         font-weight: 600;
@@ -69,14 +68,15 @@ st.markdown("""
         transition: all 0.2s ease-in-out;
     }
     
-    /* Efeito Hover (Ao passar o mouse) */
+    /* Efeito Hover */
     .pdf-button:hover {
         background-color: #1d4ed8;
         transform: translateY(-2px); /* Sobe um pouquinho */
         box-shadow: 0 6px 12px rgba(37, 99, 235, 0.3);
     }
     .pdf-button:active {
-        transform: translateY(0); /* Volta ao clicar */
+        transform: translateY(0);
+        box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);
     }
     
     /* RODAPÉ FIXO */
@@ -114,7 +114,6 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 
 # --- FUNÇÕES ---
-
 def get_base64_image(image_path):
     if os.path.exists(image_path):
         with open(image_path, "rb") as img_file:
@@ -140,32 +139,28 @@ def search_local(term, data):
         try:
             pages = doc.get('pages_content', [])
             
-            # Lógica Nova (Página a Página)
+            # 1. Procura nas páginas (Novo formato)
             for page in pages:
                 if term_lower in page['text'].lower():
                     found_pages.append(str(page['number']))
-                    # Snippet da primeira ocorrência
                     if not snippet:
                         idx = page['text'].lower().find(term_lower)
                         start = max(0, idx - 40)
                         end = min(len(page['text']), idx + 100)
                         snippet = page['text'][start:end].replace("\n", " ")
             
-            # Fallback (Se for JSON antigo, tenta achar no blocão de texto)
+            # 2. Fallback (Formato antigo ou misto)
             if not found_pages and 'content' in doc:
                  if term_lower in doc['content'].lower():
-                    # Como é JSON antigo, não sabemos a página, mas o usuário pediu para limpar o texto.
-                    # Deixamos vazio ou colocamos "Ver PDF"
-                    found_pages.append("Ver PDF") 
+                    # Se achou no texto antigo, marcamos com código especial 9999
+                    found_pages.append("9999") 
                     idx = doc['content'].lower().find(term_lower)
                     snippet = doc['content'][idx:idx+100]
 
         except: continue
             
         if found_pages:
-            # Remove duplicatas e ordena
             unique_pages = sorted(list(set(found_pages)), key=lambda x: int(x) if x.isdigit() else 9999)
-            
             results.append({
                 "title": doc['title'],
                 "url": doc['url'],
@@ -198,7 +193,7 @@ if data:
     last_update = data[0].get('scraped_at', 'Desconhecido')
     st.info(f"📅 Base atualizada em: **{last_update}** | {len(data)} documentos indexados.")
 else:
-    st.warning("⚠️ Base de dados vazia. Aguardando execução do robô.")
+    st.warning("⚠️ Base de dados vazia.")
 
 query = st.text_input("O que você procura?", placeholder="Digite Nome, CPF, Matrícula...")
 
@@ -214,36 +209,32 @@ if query:
             st.success(f"🔍 Encontrado em {len(results)} documentos ({duration:.3f}s)")
             
             for res in results:
-                # Lógica de exibição das páginas
-                pages_str = ', '.join(res['pages'])
-                
-                # Se for JSON antigo (que retorna "Ver PDF"), mostra mensagem genérica
-                if "Ver PDF" in res['pages']:
-                     pages_display = "Página(s): Não identificada (Base antiga)"
+                # TRATAMENTO DAS PÁGINAS
+                # Se tiver o código "9999", é dado velho. Se não, é dado novo.
+                if "9999" in res['pages']:
+                     pages_display = "Página: Não identificada (Base antiga, aguarde atualização)"
                 else:
+                    pages_str = ', '.join(res['pages'])
                     if len(res['pages']) > 15: 
                         pages_str = f"{', '.join(res['pages'][:15])}..."
                     pages_display = f"Página(s): <strong>{pages_str}</strong>"
 
-                # HTML FINAL DO CARD
+                # ATENÇÃO: O HTML abaixo está "colado" na margem esquerda. NÃO INDENTE ELE.
                 html_card = f"""
 <div class="result-card">
-    <div style="display:flex; justify-content:space-between; align-items:flex-start;">
-        <h3 style="margin:0; font-size:1.1rem; color:#2563eb; line-height:1.2;">📄 {res['title']}</h3>
-        <span style="font-size:0.75rem; color:#6b7280; white-space:nowrap; margin-left:10px;">{res['date']}</span>
-    </div>
-    
-    <p style="margin:12px 0 8px 0; font-size:0.95rem;">
-        ✅ {pages_display}
-    </p>
-    
-    <div class="snippet-box">
-        ...{res['snippet']}...
-    </div>
-    
-    <a href="{res['url']}" target="_blank" class="pdf-button">
-        Abrir PDF Original
-    </a>
+<div style="display:flex; justify-content:space-between; align-items:flex-start;">
+<h3 style="margin:0; font-size:1.1rem; color:#2563eb; line-height:1.2;">📄 {res['title']}</h3>
+<span style="font-size:0.75rem; color:#6b7280; white-space:nowrap; margin-left:10px;">{res['date']}</span>
+</div>
+<p style="margin:12px 0 8px 0; font-size:0.95rem;">
+✅ {pages_display}
+</p>
+<div class="snippet-box">
+...{res['snippet']}...
+</div>
+<a href="{res['url']}" target="_blank" class="pdf-button">
+Abrir PDF Original
+</a>
 </div>
 """
                 st.markdown(html_card, unsafe_allow_html=True)
