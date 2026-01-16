@@ -27,7 +27,7 @@ jobs:
 
     - name: Rodar Coletor Robusto
       run: python src/coletor.py
-n
+
     - name: Salvar Atualização (Se houver)
       uses: stefanzweifel/git-auto-commit-action@v4
       with:
