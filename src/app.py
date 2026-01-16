@@ -21,30 +21,40 @@ DB_FILE = os.path.join(root_dir, 'data', 'dados.json')
 STATUS_FILE = os.path.join(root_dir, 'data', 'status.json')
 LOGO_PATH = os.path.join(root_dir, 'assets', 'logo_diof.png')
 
-# --- CSS VISUAL (CORREÇÕES GERAIS) ---
+# --- LINK DO FORMULÁRIO DE CONTATO (Coloque seu link aqui) ---
+CONTACT_FORM_URL = "https://forms.google.com/seu-formulario-aqui" 
+
+# --- CSS VISUAL ---
 st.markdown("""
     <style>
     .block-container { padding-top: 2rem; padding-bottom: 8rem; }
 
-    /* --- CORREÇÃO DA LOGO (V10) --- */
+    /* --- CORREÇÃO DA LOGO (V11 - Altura Automática) --- */
     .logo-container {
         display: flex;
         justify-content: center;
         align-items: center;
         width: 100%;
-        margin-bottom: 20px;
-        height: 130px; /* Define uma altura fixa para o cabeçalho */
+        margin-bottom: 10px;
+        /* Sem altura fixa, deixa a imagem definir */
     }
-    /* A imagem se ajusta dentro do container sem cortar */
     .logo-container img {
-        max-height: 100%;
-        width: auto;
-        object-fit: contain; 
-        border-radius: 8px;
+        max-width: 200px; /* Largura máxima controlada */
+        height: auto;     /* Altura se ajusta para não cortar */
+        display: block;
     }
     /* --- FIM DA CORREÇÃO DA LOGO --- */
     
-    /* Inputs Dark Mode */
+    /* STATUS DO ROBÔ (Abaixo do Título) */
+    .status-text {
+        text-align: center;
+        font-size: 0.8rem;
+        color: #9ca3af; /* Cinza suave */
+        margin-bottom: 25px;
+        font-family: monospace;
+    }
+    
+    /* INPUTS (Dark Mode Friendly) */
     div[data-baseweb="input"] {
         background-color: transparent !important;
         border: 1px solid rgba(255, 255, 255, 0.2) !important;
@@ -59,7 +69,7 @@ st.markdown("""
         caret-color: #2563eb !important;
     }
     
-    /* Botões */
+    /* BOTÕES */
     .stButton button {
         background-color: #2563eb !important;
         color: white !important;
@@ -73,7 +83,7 @@ st.markdown("""
     }
     .stButton button:hover { background-color: #1d4ed8 !important; }
 
-    /* Cards */
+    /* CARDS DE RESULTADO */
     .result-card {
         background-color: rgba(37, 99, 235, 0.05); 
         border: 1px solid rgba(37, 99, 235, 0.2);
@@ -103,7 +113,7 @@ st.markdown("""
         background-color: rgba(37, 99, 235, 0.05); border-radius: 8px;
     }
     
-    /* Footer */
+    /* FOOTER */
     .footer {
         position: fixed; left: 0; bottom: 0; width: 100%;
         background-color: rgba(14, 17, 23, 0.98); color: #9ca3af; text-align: center;
@@ -120,26 +130,12 @@ st.markdown("""
         .footer-credits { color: #1f2937; }
         .stTextInput input { color: #1e293b !important; } 
         div[data-baseweb="input"] { border: 1px solid #cbd5e1 !important; }
+        .status-text { color: #6b7280; }
     }
     </style>
 """, unsafe_allow_html=True)
 
 # --- FUNÇÕES ---
-def trigger_update():
-    token = st.secrets.get("GITHUB_TOKEN")
-    owner = st.secrets.get("REPO_OWNER")
-    repo = st.secrets.get("REPO_NAME")
-    if not token or not owner or not repo:
-        st.error("⚠️ Configuração de token ausente.")
-        return
-    headers = { "Authorization": f"token {token}", "Accept": "application/vnd.github.v3+json" }
-    url = f"https://api.github.com/repos/{owner}/{repo}/actions/workflows/monitoramento_horario.yml/dispatches"
-    try:
-        response = requests.post(url, json={"ref": "main"}, headers=headers)
-        if response.status_code == 204: st.success("🚀 Robô iniciado! Aguarde ~2 min e recarregue.")
-        else: st.error(f"Erro: {response.status_code}")
-    except Exception as e: st.error(f"Erro de conexão: {e}")
-
 def get_base64_image(image_path):
     if os.path.exists(image_path):
         with open(image_path, "rb") as img_file:
@@ -197,50 +193,59 @@ def search_local(term, data):
             })
     return results
 
-# --- SIDEBAR ---
+# --- SIDEBAR (NOVA VERSÃO) ---
 with st.sidebar:
     st.header("⚙️ Painel de Controle")
-    st.write("Atualização automática a cada 30 min.")
+    st.info("O sistema verifica novas edições automaticamente a cada 30 minutos.")
+    
     st.divider()
-    st.write("**Não encontrou o que buscava?**")
-    if st.button("🔄 Forçar Atualização Agora"):
-        trigger_update()
-    st.info("Após clicar, o robô levará alguns minutos para processar novos PDFs.")
+    
+    st.write("**Precisa de ajuda?**")
+    st.write("Não encontrou o que buscava ou notou algum erro na aplicação?")
+    
+    # Botão de Link para o Formulário
+    st.link_button("📧 Entrar em Contato", url=CONTACT_FORM_URL, use_container_width=True)
 
-# --- HEADER (Imagem Corrigida) ---
+# --- HEADER (Imagem e Títulos) ---
 img_b64 = get_base64_image(LOGO_PATH)
 if img_b64:
-    # Removemos o width="150" fixo e o style inline. O CSS agora cuida disso.
+    # A classe .logo-container img no CSS cuida do tamanho agora
     st.markdown(f"""<div class="logo-container"><img src="data:image/png;base64,{img_b64}"></div>""", unsafe_allow_html=True)
 else:
     st.markdown("""<div class="logo-container"><h1 style='color:#0068c9;'>BT</h1></div>""", unsafe_allow_html=True)
 
 st.markdown("""
-<div style="text-align:center; margin-bottom:20px; margin-top:-10px;">
+<div style="text-align:center; margin-bottom:10px; margin-top:-10px;">
     <h1 style="font-weight:800; font-size:1.8rem; margin:0;">Buscador de Termos</h1>
     <p style="font-size:0.9rem; opacity:0.7; margin-top:5px;">Monitoramento Automatizado</p>
 </div>
 """, unsafe_allow_html=True)
 
-# --- LÓGICA PRINCIPAL ---
+# --- DADOS E STATUS ---
 data = load_data()
 status = load_status()
 
-if data:
-    if status and 'last_run' in status:
-        display_date = status['last_run']
-    else:
-        display_date = data[0].get('scraped_at', 'Desconhecido')
+display_date = "Desconhecido"
+if status and 'last_run' in status:
+    display_date = status['last_run']
+elif data:
+    display_date = data[0].get('scraped_at', 'Desconhecido')
 
-    # --- MENSAGEM CORRIGIDA (Status + Aviso de Escopo) ---
+# 1. STATUS DO ROBÔ (Fora da caixa azul, centralizado)
+st.markdown(f"""
+<div class="status-text">
+    ✅ Última verificação do sistema: {display_date}
+</div>
+""", unsafe_allow_html=True)
+
+if data:
+    # 2. CAIXA DE ESCOPO (Limpa e Focada)
     st.info(f"""
-    ✅ **Status do Robô:** Verificação realizada em **{display_date}**.
-    \n---
-    \n📂 **Escopo da Pesquisa:** O sistema monitora apenas as **{len(data)} edições mais recentes** (disponíveis na capa do portal DIOF).
-    \n*⚠️ Atenção: Não realizamos buscas no acervo histórico completo do Diário Oficial.*
+    📂 **Escopo da Pesquisa:** O sistema monitora as **{len(data)} edições mais recentes** disponíveis na capa do portal DIOF.
+    \n*⚠️ Atenção: Não realizamos buscas no acervo histórico completo (anos anteriores), apenas nas edições vigentes do painel.*
     """)
 else:
-    st.warning("⚠️ Base de dados vazia.")
+    st.warning("⚠️ Base de dados vazia. Aguardando primeira execução.")
 
 # --- FORM DE BUSCA ---
 st.write("O que você procura?")
