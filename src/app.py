@@ -78,6 +78,13 @@ st.markdown("""
     .footer-credits { font-size: 0.85rem; font-weight: 600; color: #d1d5db; }
     .footer-disclaimer { font-size: 0.7rem; opacity: 0.8; line-height: 1.3; }
     
+    /* Ajuste para Mobile - Expander */
+    .streamlit-expanderHeader {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: #2563eb;
+    }
+    
     @media (prefers-color-scheme: light) {
         .result-card { background-color: #f0f9ff; border: 1px solid #bae6fd; }
         .snippet-box { background: #f1f5f9; color: #374151; border: 1px solid #e2e8f0; }
@@ -121,19 +128,29 @@ def search_local(term, data):
     
     for doc in data:
         found_pages = []
+        full_text_found = "" # Armazena o texto completo da primeira página achada
         snippet = ""
+        
         try:
             pages = doc.get('pages_content', [])
+            
             for page in pages:
                 if term_lower in page['text'].lower():
-                    found_pages.append(str(page['number']))
+                    page_num = str(page['number'])
+                    found_pages.append(page_num)
+                    
+                    # Salva o texto completo da primeira ocorrência para exibir no mobile
+                    if not full_text_found:
+                        full_text_found = page['text']
+                        
+                    # Snippet curto para o card
                     if not snippet:
                         idx = page['text'].lower().find(term_lower)
                         start = max(0, idx - 40)
                         end = min(len(page['text']), idx + 100)
                         snippet = page['text'][start:end].replace("\n", " ")
             
-            # Fallback para base antiga
+            # Fallback Antigo
             if not found_pages and 'content' in doc:
                  if term_lower in doc['content'].lower():
                     found_pages.append("9999") 
@@ -148,13 +165,13 @@ def search_local(term, data):
                 "url": doc['url'],
                 "date": doc.get('scraped_at', 'Data desc.'),
                 "pages": unique_pages,
-                "snippet": snippet
+                "snippet": snippet,
+                "full_text": full_text_found
             })
     return results
 
 # --- HEADER ---
 img_b64 = get_base64_image(LOGO_PATH)
-
 if img_b64:
     st.markdown(f"""<div class="logo-container"><img src="data:image/png;base64,{img_b64}" width="150" style="border-radius:8px;"></div>""", unsafe_allow_html=True)
 else:
@@ -190,45 +207,54 @@ if query:
             st.success(f"🔍 Encontrado em {len(results)} documentos ({duration:.3f}s)")
             
             for res in results:
-                # 1. Limpeza do URL (Importante para evitar quebra de link)
-                base_url = res['url'].strip() 
-                
-                # 2. Definição da Página e Link
+                # 1. Definição do Link
+                base_url = res['url'].strip()
                 first_page = res['pages'][0] if res['pages'] else None
                 
-                # Só adiciona #page=X se for um número válido e não for o código 9999
+                # Link com página (Funciona no Desktop)
                 if first_page and first_page != "9999" and first_page.isdigit():
                     pdf_link = f"{base_url}#page={first_page}"
+                    btn_text = f"Abrir PDF na Pág. {first_page}"
                 else:
                     pdf_link = base_url
+                    btn_text = "Abrir PDF Original"
 
-                # 3. Texto de Exibição das Páginas
+                # 2. Exibição das Páginas
                 if "9999" in res['pages']:
-                     pages_display = "Página: Não identificada (Necessário limpar base antiga)"
+                     pages_display = "Localizado no texto (Base antiga)"
                 else:
                     pages_str = ', '.join(res['pages'])
                     if len(res['pages']) > 15: 
                         pages_str = f"{', '.join(res['pages'][:15])}..."
                     pages_display = f"Página(s): <strong>{pages_str}</strong>"
 
-                # 4. Renderização do Card
+                # 3. Card HTML
                 html_card = f"""
 <div class="result-card">
-<div style="display:flex; justify-content:space-between; align-items:flex-start;">
-<h3 style="margin:0; font-size:1.1rem; color:#2563eb; line-height:1.2;">📄 {res['title']}</h3>
-<span style="font-size:0.75rem; color:#6b7280; white-space:nowrap; margin-left:10px;">{res['date']}</span>
-</div>
-<p style="margin:12px 0 8px 0; font-size:0.95rem;">
-✅ {pages_display}
-</p>
-<div class="snippet-box">
-...{res['snippet']}...
-</div>
-<a href="{pdf_link}" target="_blank" class="pdf-button">
-Abrir no local do PDF
-</a>
+    <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+        <h3 style="margin:0; font-size:1.1rem; color:#2563eb; line-height:1.2;">📄 {res['title']}</h3>
+        <span style="font-size:0.75rem; color:#6b7280; white-space:nowrap; margin-left:10px;">{res['date']}</span>
+    </div>
+    <p style="margin:12px 0 8px 0; font-size:0.95rem;">
+        ✅ {pages_display}
+    </p>
+    <div class="snippet-box">
+        ...{res['snippet']}...
+    </div>
+    <a href="{pdf_link}" target="_blank" class="pdf-button">
+        {btn_text}
+    </a>
 </div>
 """
                 st.markdown(html_card, unsafe_allow_html=True)
+                
+                # 4. EXPANDER "MOBILE FRIENDLY" (Mostra o texto puro)
+                # Se o usuário estiver no celular e o PDF não abrir na página certa,
+                # ele pode ler o texto aqui mesmo.
+                if res.get('full_text'):
+                    with st.expander(f"📱 Visualizar Texto da Pág. {first_page}"):
+                        st.text_area("Conteúdo extraído:", value=res['full_text'], height=300, disabled=True)
+                        st.caption("Este é o texto exato extraído do PDF. Use para conferência rápida no celular.")
+
         else:
             st.warning(f"O termo **'{query}'** não foi encontrado.")
