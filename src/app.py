@@ -6,11 +6,11 @@ from datetime import datetime
 import requests
 import time
 
-# --- CONFIGURAÇÃO DA PÁGINA (LAYOUT WIDE PARA CABER 3 COLUNAS) ---
+# --- CONFIGURAÇÃO DA PÁGINA (LAYOUT WIDE) ---
 st.set_page_config(
     page_title="Monitor DIOF-RO", 
     page_icon="⚖️", 
-    layout="wide", # MUDANÇA IMPORTANTE: Layout Wide para caber o grid
+    layout="wide",
     initial_sidebar_state="collapsed"
 )
 
@@ -24,14 +24,14 @@ LOGO_PATH = os.path.join(root_dir, 'assets', 'logo_diof.png')
 # --- LINK DO FORMULÁRIO DE CONTATO ---
 CONTACT_FORM_URL = "https://forms.gle/ZyjbbLg47n6uVNAz9"
 
-# --- CSS VISUAL (V25 - GRID & CARD SYSTEM) ---
+# --- CSS VISUAL (V26 - BUSCA CENTRALIZADA & FIXED BUTTON) ---
 st.markdown("""
     <style>
     /* 1. LAYOUT GERAL */
     .block-container { 
         padding-top: 3rem !important; 
         padding-bottom: 6rem; 
-        max-width: 1200px !important; /* Limita a largura para não esticar demais em monitores gigantes */
+        max-width: 1400px !important; /* Limite máximo para monitores ultrawide */
     }
     
     /* 2. LOGO */
@@ -44,7 +44,7 @@ st.markdown("""
         font-weight: 800;
         font-size: 2rem;
         margin-bottom: 0;
-        color: #f8fafc; /* Cor clara padrão */
+        color: #f8fafc;
     }
     .sub-title {
         text-align: center;
@@ -68,7 +68,7 @@ st.markdown("""
     }
     .stTextInput input { caret-color: #2563eb !important; }
     
-    /* 5. BOTÃO DE PESQUISA */
+    /* 5. BOTÃO DE PESQUISA (CORREÇÃO DE QUEBRA DE LINHA) */
     .stButton button {
         background-color: #2563eb !important;
         color: white !important;
@@ -78,10 +78,14 @@ st.markdown("""
         border: none !important;
         width: 100%;
         transition: background 0.3s;
+        
+        /* O SEGREDO: Impede que o texto quebre */
+        white-space: nowrap !important; 
+        overflow: hidden;
     }
     .stButton button:hover { background-color: #1d4ed8 !important; }
 
-    /* 6. ESTILO DO CARD (INTERNO) */
+    /* 6. ESTILO DO CARD */
     .card-title {
         font-size: 1rem;
         font-weight: 700;
@@ -96,7 +100,7 @@ st.markdown("""
         display: block;
     }
     
-    /* 7. SNIPPET DE TEXTO (Dentro do Card) */
+    /* 7. SNIPPET DE TEXTO */
     .snippet-box {
         background: #1e293b; 
         color: #e2e8f0;      
@@ -107,10 +111,10 @@ st.markdown("""
         margin-bottom: 10px;
         border: 1px solid #334155; 
         line-height: 1.4;
-        min-height: 80px; /* Altura mínima para alinhar os cards */
+        min-height: 80px; 
     }
     
-    /* 8. BOTÃO PDF (Dentro do Card) */
+    /* 8. BOTÃO PDF */
     .pdf-button {
         display: block; width: 100%; 
         background-color: #2563eb; 
@@ -130,7 +134,7 @@ st.markdown("""
         transform: translateY(-1px);
     }
     
-    /* 9. LEITURA RÁPIDA (Dentro do Card) */
+    /* 9. LEITURA RÁPIDA */
     .mobile-read-box {
         background-color: #0f172a; 
         color: #f1f5f9;            
@@ -140,7 +144,7 @@ st.markdown("""
         font-family: ui-sans-serif, system-ui, sans-serif;
         font-size: 0.85rem;
         line-height: 1.6; 
-        max-height: 300px; /* Menor altura para caber no grid */
+        max-height: 300px; 
         overflow-y: auto;
         white-space: pre-wrap;
         scrollbar-width: thin;
@@ -150,7 +154,7 @@ st.markdown("""
     .mobile-read-box::-webkit-scrollbar-track { background: #0f172a; }
     .mobile-read-box::-webkit-scrollbar-thumb { background-color: #2563eb; border-radius: 4px; }
 
-    /* 10. SELETOR DE PÁGINAS (Compacto) */
+    /* 10. SELETOR DE PÁGINAS */
     div[role="radiogroup"] label {
         padding: 2px 8px;
         font-size: 0.8rem;
@@ -247,7 +251,6 @@ with st.sidebar:
     st.link_button("📧 Entrar em Contato", url=CONTACT_FORM_URL, use_container_width=True)
 
 # --- HEADER (Centralizado) ---
-# Usamos colunas para centralizar a imagem no layout Wide
 c1, c2, c3 = st.columns([1, 2, 1])
 with c2:
     img_b64 = get_base64_image(LOGO_PATH)
@@ -269,14 +272,21 @@ with c2:
 
     # Info de Escopo
     if data:
-        st.info(f"📂 **Escopo:** Monitorando as **{len(data)} últimas edições** (apenas capa do portal).")
+        st.info(f"📂 **Escopo:** Monitorando as **{len(data)} últimas edições** (apenas capa do portal do DIOF - RO).")
     else:
         st.warning("⚠️ Base de dados vazia.")
 
-    # Form de Busca
+# --- FORM DE BUSCA (AGORA CENTRALIZADO E LIMITADO) ---
+# Aqui está a mágica: Criamos colunas [1, 3, 1] para o formulário não ocupar 100% da tela em Wide Mode
+c_left, c_center, c_right = st.columns([1, 3, 1])
+
+with c_center:
     st.write("O que você procura?")
     with st.form(key='search_form'):
-        col_in, col_btn = st.columns([4, 1], gap="small")
+        # Colunas internas do formulário [4, 1] com alinhamento vertical
+        # vertical_alignment="bottom" faz o botão alinhar com o input e não com a label
+        col_in, col_btn = st.columns([4, 1], gap="small", vertical_alignment="bottom")
+        
         with col_in:
             query = st.text_input(label="Busca", placeholder="Digite Nome, CPF, Matrícula...", label_visibility="collapsed")
         with col_btn:
@@ -297,28 +307,20 @@ if submit_button or query:
         if results:
             st.success(f"🔍 Encontrado em {len(results)} documentos ({duration:.3f}s)")
             
-            # --- CONFIGURAÇÃO DO GRID (3 COLUNAS) ---
             num_cols = 3
             cols = st.columns(num_cols)
             
             for i, res in enumerate(results):
-                # Escolhe a coluna certa (0, 1 ou 2) baseado no índice
                 with cols[i % num_cols]:
-                    
-                    # CADA RESULTADO É UM CONTAINER "CARTÃO"
                     with st.container(border=True):
-                        
-                        # 1. Cabeçalho do Card
                         base_url = res['url'].strip().split("?")[0]
                         st.markdown(f"""
                             <div class="card-title">📄 {res['title']}</div>
                             <span class="card-date">{res['date']}</span>
                         """, unsafe_allow_html=True)
                         
-                        # 2. Snippet (Texto fixo de prévia)
                         st.markdown(f"""<div class="snippet-box">...{res['snippet']}...</div>""", unsafe_allow_html=True)
 
-                        # 3. Lógica de Páginas (Interativa)
                         available_pages = res['pages']
                         selected_page_num = available_pages[0]
 
@@ -329,12 +331,11 @@ if submit_button or query:
                                 options=available_pages,
                                 horizontal=True,
                                 label_visibility="collapsed",
-                                key=f"sel_{i}_{base_url}" # Key única para o grid
+                                key=f"sel_{i}_{base_url}"
                             )
                         else:
                             st.caption(f"Página única: {selected_page_num}")
 
-                        # 4. Link Dinâmico
                         if selected_page_num != "9999" and selected_page_num.isdigit():
                             link = f"{base_url}#page={selected_page_num}"
                             btn_txt = f"Abrir Pág. {selected_page_num}"
@@ -344,7 +345,6 @@ if submit_button or query:
                         
                         st.markdown(f"""<a href="{link}" target="_blank" class="pdf-button">{btn_txt}</a>""", unsafe_allow_html=True)
 
-                        # 5. Expander (Fica dentro do cartão)
                         full_text = res['matches'].get(selected_page_num, "...")
                         with st.expander("📱 Ler Texto"):
                             st.markdown(f"""<div class="mobile-read-box">{full_text}</div>""", unsafe_allow_html=True)
