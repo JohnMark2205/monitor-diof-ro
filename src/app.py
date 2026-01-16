@@ -24,7 +24,7 @@ LOGO_PATH = os.path.join(root_dir, 'assets', 'logo_diof.png')
 # --- LINK DO FORMULÁRIO DE CONTATO ---
 CONTACT_FORM_URL = "https://forms.gle/ZyjbbLg47n6uVNAz9"
 
-# --- CSS VISUAL (ADAPTATIVO V20) ---
+# --- CSS VISUAL (V21 - CONTRASTE BLINDADO) ---
 st.markdown("""
     <style>
     /* 1. LAYOUT GERAL */
@@ -37,23 +37,21 @@ st.markdown("""
     .logo-box { text-align: center; width: 100%; margin-bottom: 15px; }
     .logo-box img { max-width: 300px; width: 80%; height: auto; }
 
-    /* 3. INPUTS (Correção Crítica de Contraste) */
-    /* Configuração Padrão (Baseada no Dark Mode) */
+    /* 3. INPUTS (Correção: Deixar Streamlit gerenciar cores, focar na Borda) */
     div[data-baseweb="input"] {
-        background-color: transparent !important;
-        border: 1px solid rgba(255, 255, 255, 0.2) !important;
         border-radius: 8px !important;
+        /* Não forçamos background aqui para não quebrar o modo Light */
     }
+    /* Borda Azul quando clica */
     div[data-baseweb="input"]:focus-within {
         border: 2px solid #2563eb !important;
         box-shadow: none !important;
     }
-    /* IMPORTANTE: Removemos a cor forçada. Deixamos o Streamlit gerenciar a cor do texto */
     .stTextInput input {
         caret-color: #2563eb !important;
     }
     
-    /* 4. BOTÕES (Sempre Azul com texto Branco - Funciona nos dois modos) */
+    /* 4. BOTÕES */
     .stButton button {
         background-color: #2563eb !important;
         color: white !important;
@@ -67,28 +65,32 @@ st.markdown("""
     }
     .stButton button:hover { background-color: #1d4ed8 !important; }
 
-    /* 5. CARDS (Padrão Dark) */
+    /* 5. CARDS (Fundo adaptativo, mas borda azul fixa) */
     .result-card {
-        background-color: rgba(37, 99, 235, 0.05); 
+        background-color: rgba(37, 99, 235, 0.05); /* Leve azul no fundo */
         border: 1px solid rgba(37, 99, 235, 0.2);
         padding: 16px; 
         border-radius: 12px; 
         margin-bottom: 16px; 
         border-left: 5px solid #2563eb;
         box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-        color: inherit; /* Herda a cor do texto do tema */
     }
+    
+    /* 6. SNIPPET DE TEXTO (ESTILO TERMINAL - Sempre Escuro) */
+    /* Isso garante leitura perfeita em qualquer modo */
     .snippet-box {
-        background: rgba(0,0,0,0.2); 
+        background: #1e293b; /* Fundo Escuro */
+        color: #e2e8f0;      /* Texto Claro */
         padding: 12px; 
         border-radius: 8px; 
         font-family: monospace; 
         font-size: 0.85rem; 
         margin: 12px 0;
-        color: #e5e7eb; /* Texto claro fixo para fundo escuro */
-        border: 1px solid rgba(255,255,255,0.05); 
+        border: 1px solid #334155; 
         line-height: 1.4;
     }
+    
+    /* 7. BOTÃO PDF */
     .pdf-button {
         display: block; width: 100%; background-color: #2563eb; color: white !important;
         text-decoration: none !important; padding: 12px 0; border-radius: 8px;
@@ -96,30 +98,40 @@ st.markdown("""
         box-shadow: 0 4px 6px rgba(37, 99, 235, 0.2); transition: all 0.2s ease-in-out;
     }
     
-    /* 6. LEITURA RÁPIDA (Padrão Dark) */
+    /* 8. LEITURA RÁPIDA (ESTILO TERMINAL - Sempre Escuro) */
     .mobile-read-box {
-        background-color: #1e293b;
-        color: #e2e8f0;
+        background-color: #0f172a; /* Quase preto (Slate-900) */
+        color: #f1f5f9;            /* Branco Gelo */
         padding: 16px;
         border-radius: 8px;
-        border: 1px solid rgba(255, 255, 255, 0.1);
+        border: 1px solid #334155;
         font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
         font-size: 0.95rem;
-        line-height: 1.6;
+        line-height: 1.7; /* Leitura confortável */
         max-height: 400px;
         overflow-y: auto;
-        -webkit-overflow-scrolling: touch;
+        -webkit-overflow-scrolling: touch; /* Scroll suave no iPhone */
         white-space: pre-wrap;
         margin-top: 10px;
     }
-    /* Scrollbar Dark Mode */
-    .mobile-read-box::-webkit-scrollbar { width: 8px; }
-    .mobile-read-box::-webkit-scrollbar-track { background: transparent; }
-    .mobile-read-box::-webkit-scrollbar-thumb { background-color: #475569; border-radius: 10px; }
     
+    /* SCROLLBAR VISÍVEL (Cor Azul Clara para contraste no fundo escuro) */
+    .mobile-read-box::-webkit-scrollbar { width: 8px; }
+    .mobile-read-box::-webkit-scrollbar-track { background: #1e293b; border-radius: 4px; }
+    .mobile-read-box::-webkit-scrollbar-thumb { 
+        background-color: #60a5fa; /* Azul Claro Vibrante */
+        border-radius: 4px; 
+        border: 2px solid #1e293b; /* Borda para destacar */
+    }
+
+    .streamlit-expanderHeader {
+        font-size: 0.9rem; font-weight: 600; color: #2563eb;
+        background-color: rgba(37, 99, 235, 0.05); border-radius: 8px;
+    }
+
     .status-highlight { color: #34d399; font-weight: 600; }
     
-    /* FOOTER (Padrão Dark) */
+    /* FOOTER */
     .footer {
         position: fixed; left: 0; bottom: 0; width: 100%;
         background-color: rgba(14, 17, 23, 0.98); color: #9ca3af; text-align: center;
@@ -128,52 +140,15 @@ st.markdown("""
     }
     .footer-credits { font-size: 0.85rem; font-weight: 600; color: #d1d5db; }
     .footer-disclaimer { font-size: 0.7rem; opacity: 0.8; line-height: 1.3; }
-
-    /* ============================================================
-       MÁGICA DO MODO LIGHT (Override para fundo branco)
-       ============================================================ */
+    
+    /* AJUSTES ESPECÍFICOS PARA MODO LIGHT (Apenas o necessário) */
     @media (prefers-color-scheme: light) {
-        /* Input: Fundo branco e borda cinza */
-        div[data-baseweb="input"] {
-            background-color: #ffffff !important;
-            border: 1px solid #cbd5e1 !important;
-        }
-        /* O texto do input fica preto automaticamente pelo Streamlit */
-
-        /* Cards: Fundo quase branco */
-        .result-card {
-            background-color: #f8fafc; /* Slate-50 */
-            border: 1px solid #e2e8f0;
-        }
-
-        /* Snippet (Caixa cinza claro, texto escuro) */
-        .snippet-box {
-            background: #f1f5f9; /* Slate-100 */
-            color: #334155;      /* Slate-700 (Escuro) */
-            border: 1px solid #cbd5e1;
-        }
-
-        /* Leitura Rápida (Fundo Branco, Texto Escuro) */
-        .mobile-read-box {
-            background-color: #ffffff;
-            color: #1e293b; /* Texto Escuro */
-            border: 1px solid #cbd5e1;
-        }
-        /* Scrollbar mais escura para aparecer no fundo branco */
-        .mobile-read-box::-webkit-scrollbar-thumb { 
-            background-color: #94a3b8; /* Slate-400 (Cinza visível) */
-        }
-
-        /* Footer (Fundo Branco) */
-        .footer {
-            background-color: rgba(255, 255, 255, 0.98);
-            color: #4b5563;
-            border-top: 1px solid #e5e7eb;
-        }
+        .result-card { background-color: #f8fafc; border: 1px solid #e2e8f0; }
+        .footer { background-color: rgba(255, 255, 255, 0.98); color: #4b5563; border-top: 1px solid #e5e7eb; }
         .footer-credits { color: #1f2937; }
-        
-        /* Status */
         .status-highlight { color: #059669; }
+        
+        /* Obs: Snippet e Leitura Rápida continuam escuras propositalmente */
     }
     </style>
 """, unsafe_allow_html=True)
@@ -343,7 +318,6 @@ if submit_button or query:
 """
                 st.markdown(html_card, unsafe_allow_html=True)
                 
-                # --- LEITURA RÁPIDA (ADAPTATIVA) ---
                 if res.get('full_text'):
                     with st.expander(f"📱 Leitura Rápida (Pág. {first_page})"):
                         st.markdown(f"""
