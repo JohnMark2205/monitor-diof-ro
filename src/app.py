@@ -24,14 +24,14 @@ LOGO_PATH = os.path.join(root_dir, 'assets', 'logo_diof.png')
 # --- LINK DO FORMULÁRIO DE CONTATO ---
 CONTACT_FORM_URL = "https://forms.gle/ZyjbbLg47n6uVNAz9"
 
-# --- CSS VISUAL (V26 - BUSCA CENTRALIZADA & FIXED BUTTON) ---
+# --- CSS VISUAL (V29 - CLEAN CARD) ---
 st.markdown("""
     <style>
     /* 1. LAYOUT GERAL */
     .block-container { 
         padding-top: 3rem !important; 
         padding-bottom: 6rem; 
-        max-width: 1400px !important; /* Limite máximo para monitores ultrawide */
+        max-width: 1400px !important;
     }
     
     /* 2. LOGO */
@@ -40,24 +40,13 @@ st.markdown("""
 
     /* 3. TÍTULOS E STATUS */
     .main-title {
-        text-align: center;
-        font-weight: 800;
-        font-size: 2rem;
-        margin-bottom: 0;
-        color: #f8fafc;
+        text-align: center; font-weight: 800; font-size: 2rem; margin-bottom: 0; color: #f8fafc;
     }
     .sub-title {
-        text-align: center;
-        font-size: 0.9rem;
-        opacity: 0.7;
-        margin-bottom: 5px;
+        text-align: center; font-size: 0.9rem; opacity: 0.7; margin-bottom: 5px;
     }
     .status-text {
-        text-align: center;
-        font-size: 0.8rem;
-        font-family: monospace;
-        color: #9ca3af;
-        margin-bottom: 30px;
+        text-align: center; font-size: 0.8rem; font-family: monospace; color: #9ca3af; margin-bottom: 30px;
     }
 
     /* 4. INPUTS */
@@ -68,7 +57,7 @@ st.markdown("""
     }
     .stTextInput input { caret-color: #2563eb !important; }
     
-    /* 5. BOTÃO DE PESQUISA (CORREÇÃO DE QUEBRA DE LINHA) */
+    /* 5. BOTÃO DE PESQUISA */
     .stButton button {
         background-color: #2563eb !important;
         color: white !important;
@@ -77,41 +66,42 @@ st.markdown("""
         font-weight: 600 !important;
         border: none !important;
         width: 100%;
-        transition: background 0.3s;
-        
-        /* O SEGREDO: Impede que o texto quebre */
         white-space: nowrap !important; 
         overflow: hidden;
+        transition: background 0.3s;
     }
     .stButton button:hover { background-color: #1d4ed8 !important; }
 
-    /* 6. ESTILO DO CARD */
+    /* 6. ESTILO DO CARD (INTERNO) */
     .card-title {
-        font-size: 1rem;
+        font-size: 1.05rem;
         font-weight: 700;
         color: #2563eb;
-        margin-bottom: 4px;
+        margin-bottom: 2px;
         line-height: 1.2;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
     .card-date {
-        font-size: 0.75rem;
-        color: #64748b;
+        font-size: 0.7rem;
+        color: #94a3b8; 
         margin-bottom: 12px;
         display: block;
+        border-bottom: 1px solid rgba(255,255,255,0.1);
+        padding-bottom: 8px;
     }
     
-    /* 7. SNIPPET DE TEXTO */
-    .snippet-box {
-        background: #1e293b; 
-        color: #e2e8f0;      
-        padding: 10px; 
-        border-radius: 6px; 
-        font-family: monospace; 
-        font-size: 0.8rem; 
-        margin-bottom: 10px;
-        border: 1px solid #334155; 
-        line-height: 1.4;
-        min-height: 80px; 
+    /* 7. TEXTO DE CONTEXTO ("Encontrado em...") */
+    .found-text {
+        font-size: 0.85rem;
+        color: #e2e8f0; /* Cor clara para destaque */
+        margin-bottom: 8px;
+        display: block;
+    }
+    .found-highlight {
+        color: #34d399; /* Verde para o número */
+        font-weight: 700;
     }
     
     /* 8. BOTÃO PDF */
@@ -120,14 +110,13 @@ st.markdown("""
         background-color: #2563eb; 
         color: white !important;
         text-decoration: none !important; 
-        padding: 8px 0; 
+        padding: 10px 0; 
         border-radius: 6px;
-        font-size: 0.9rem;
+        font-size: 0.95rem;
         font-weight: 600; 
         text-align: center; 
-        margin-top: 10px; 
-        margin-bottom: 10px;
         transition: all 0.2s ease-in-out;
+        margin-bottom: 10px;
     }
     .pdf-button:hover {
         background-color: #1d4ed8; 
@@ -155,9 +144,13 @@ st.markdown("""
     .mobile-read-box::-webkit-scrollbar-thumb { background-color: #2563eb; border-radius: 4px; }
 
     /* 10. SELETOR DE PÁGINAS */
+    div[role="radiogroup"] {
+        margin-bottom: 15px;
+    }
     div[role="radiogroup"] label {
-        padding: 2px 8px;
-        font-size: 0.8rem;
+        padding: 4px 12px; /* Botões um pouco maiores para facilitar toque */
+        font-size: 0.85rem;
+        border-radius: 12px !important;
     }
     
     .status-highlight { color: #34d399; font-weight: 600; }
@@ -168,12 +161,13 @@ st.markdown("""
         padding: 20px; border-top: 1px solid rgba(255,255,255,0.1);
     }
 
-    /* MEDIA QUERY LIGHT MODE */
     @media (prefers-color-scheme: light) {
         .main-title { color: #1e293b; }
-        .card-date { color: #64748b; }
+        .card-date { color: #64748b; border-bottom: 1px solid #e2e8f0; }
         .footer { border-top: 1px solid #e2e8f0; }
         .status-highlight { color: #059669; }
+        .found-text { color: #334155; }
+        .found-highlight { color: #059669; }
     }
     </style>
 """, unsafe_allow_html=True)
@@ -205,7 +199,6 @@ def search_local(term, data):
     
     for doc in data:
         matches_map = {} 
-        snippet = ""
         found_any = False
         
         try:
@@ -215,17 +208,11 @@ def search_local(term, data):
                     page_num = str(page['number']).strip()
                     matches_map[page_num] = page['text']
                     found_any = True
-                    if not snippet:
-                        idx = page['text'].lower().find(term_lower)
-                        start = max(0, idx - 40)
-                        end = min(len(page['text']), idx + 100)
-                        snippet = page['text'][start:end].replace("\n", " ")
+                    # Snippet logic removed from view, but kept here if needed for debugging
 
             if not found_any and 'content' in doc:
                  if term_lower in doc['content'].lower():
                     matches_map["9999"] = doc['content']
-                    idx = doc['content'].lower().find(term_lower)
-                    snippet = doc['content'][idx:idx+100]
                     found_any = True
         except: continue
             
@@ -234,10 +221,8 @@ def search_local(term, data):
             results.append({
                 "title": doc['title'],
                 "url": doc['url'],
-                "date": doc.get('scraped_at', 'Data desc.'),
                 "matches": matches_map,
-                "pages": sorted_pages,
-                "snippet": snippet
+                "pages": sorted_pages
             })
     return results
 
@@ -259,40 +244,34 @@ with c2:
     else:
         st.markdown("""<div style='text-align: center; margin-bottom: 20px;'><h1 style='color:#0068c9;'>BT</h1></div>""", unsafe_allow_html=True)
 
-    # Status e Título
     data = load_data()
     status = load_status()
-    display_date = status['last_run'] if (status and 'last_run' in status) else "Desconhecido"
+    global_last_run = status['last_run'] if (status and 'last_run' in status) else "Data desconhecida"
 
     st.markdown(f"""
         <h1 class="main-title">Buscador de Termos</h1>
         <p class="sub-title">Monitoramento Automatizado</p>
-        <p class="status-text">✅ Última verificação: <span class="status-highlight">{display_date}</span></p>
+        <p class="status-text">✅ Última verificação: <span class="status-highlight">{global_last_run}</span></p>
     """, unsafe_allow_html=True)
 
-    # Info de Escopo
     if data:
-        st.info(f"📂 **Escopo:** Monitorando as **{len(data)} últimas edições** (apenas capa do portal do DIOF - RO).")
+        st.info(f"📂 **Escopo:** Monitorando as **{len(data)} últimas edições** (apenas capa do portal).")
     else:
         st.warning("⚠️ Base de dados vazia.")
 
-# --- FORM DE BUSCA (AGORA CENTRALIZADO E LIMITADO) ---
-# Aqui está a mágica: Criamos colunas [1, 3, 1] para o formulário não ocupar 100% da tela em Wide Mode
+# --- FORM DE BUSCA ---
 c_left, c_center, c_right = st.columns([1, 3, 1])
 
 with c_center:
     st.write("O que você procura?")
     with st.form(key='search_form'):
-        # Colunas internas do formulário [4, 1] com alinhamento vertical
-        # vertical_alignment="bottom" faz o botão alinhar com o input e não com a label
         col_in, col_btn = st.columns([4, 1], gap="small", vertical_alignment="bottom")
-        
         with col_in:
             query = st.text_input(label="Busca", placeholder="Digite Nome, CPF, Matrícula...", label_visibility="collapsed")
         with col_btn:
             submit_button = st.form_submit_button(label="🔍 Pesquisar")
 
-# --- RESULTADOS (GRID LAYOUT) ---
+# --- RESULTADOS (V29 - LAYOUT LIMPO) ---
 if submit_button or query:
     st.divider()
     if not query:
@@ -314,28 +293,33 @@ if submit_button or query:
                 with cols[i % num_cols]:
                     with st.container(border=True):
                         base_url = res['url'].strip().split("?")[0]
+                        
+                        # 1. TÍTULO E DATA
                         st.markdown(f"""
-                            <div class="card-title">📄 {res['title']}</div>
-                            <span class="card-date">{res['date']}</span>
+                            <div class="card-title" title="{res['title']}">📄 {res['title']}</div>
+                            <span class="card-date">Atualizado em: {global_last_run}</span>
                         """, unsafe_allow_html=True)
                         
-                        st.markdown(f"""<div class="snippet-box">...{res['snippet']}...</div>""", unsafe_allow_html=True)
-
+                        # 2. CONTEXTO E SELETOR DE PÁGINAS
                         available_pages = res['pages']
                         selected_page_num = available_pages[0]
 
                         if len(available_pages) > 1:
-                            st.caption(f"Encontrado em {len(available_pages)} pgs:")
+                            # Texto de contexto destacado
+                            st.markdown(f"""<span class="found-text">Encontrado em <span class="found-highlight">{len(available_pages)}</span> páginas:</span>""", unsafe_allow_html=True)
+                            
+                            # Botões de rádio horizontais
                             selected_page_num = st.radio(
-                                "Páginas:",
+                                "Seletor de páginas", 
                                 options=available_pages,
                                 horizontal=True,
                                 label_visibility="collapsed",
                                 key=f"sel_{i}_{base_url}"
                             )
                         else:
-                            st.caption(f"Página única: {selected_page_num}")
-
+                             st.markdown(f"""<span class="found-text">Encontrado na página <span class="found-highlight">{selected_page_num}</span></span>""", unsafe_allow_html=True)
+                        
+                        # 3. BOTÃO DE AÇÃO (ABRIR PDF)
                         if selected_page_num != "9999" and selected_page_num.isdigit():
                             link = f"{base_url}#page={selected_page_num}"
                             btn_txt = f"Abrir Pág. {selected_page_num}"
@@ -345,6 +329,7 @@ if submit_button or query:
                         
                         st.markdown(f"""<a href="{link}" target="_blank" class="pdf-button">{btn_txt}</a>""", unsafe_allow_html=True)
 
+                        # 4. EXPANDER (Discreto no final)
                         full_text = res['matches'].get(selected_page_num, "...")
                         with st.expander("📱 Ler Texto"):
                             st.markdown(f"""<div class="mobile-read-box">{full_text}</div>""", unsafe_allow_html=True)
