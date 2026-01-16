@@ -20,43 +20,51 @@ root_dir = os.path.dirname(current_dir)
 DB_FILE = os.path.join(root_dir, 'data', 'dados.json')
 LOGO_PATH = os.path.join(root_dir, 'assets', 'logo_diof.png')
 
-# --- CSS VISUAL (UX APRIMORADA) ---
+# --- CSS VISUAL (UX APRIMORADA - CORREÇÃO BORDA) ---
 st.markdown("""
     <style>
     .block-container { padding-top: 2rem; padding-bottom: 8rem; }
     .logo-container { display: flex; justify-content: center; align-items: center; width: 100%; margin-bottom: 20px; }
     
-    /* ESTILIZAÇÃO DO INPUT (Correção da Borda Vermelha) */
-    /* Estado Normal */
-    .stTextInput input {
-        border: 1px solid #cbd5e1 !important;
+    /* --- CORREÇÃO DEFINITIVA DO INPUT --- */
+    
+    /* 1. Estiliza o Container do Input (A caixa de fora) */
+    div[data-baseweb="input"] {
+        border: 1px solid #cbd5e1 !important; /* Borda cinza suave padrão */
         border-radius: 8px !important;
-        padding: 10px 12px !important;
+        background-color: white !important;
+    }
+
+    /* 2. Quando o usuário clica (Foco) */
+    div[data-baseweb="input"]:focus-within {
+        border: 2px solid #2563eb !important; /* Azul Profissional */
+        box-shadow: none !important; /* REMOVE A SOMBRA VERMELHA DO STREAMLIT */
+    }
+
+    /* 3. Ajuste do texto interno para não quebrar */
+    .stTextInput input {
+        color: #1e293b !important;
     }
     
-    /* Estado Focado (Quando clica para digitar) - Agora é AZUL */
-    .stTextInput input:focus {
-        border: 2px solid #2563eb !important; /* Azul do tema */
-        box-shadow: none !important; /* Remove o brilho vermelho padrão */
-        outline: none !important;
-    }
+    /* --- FIM DA CORREÇÃO DO INPUT --- */
     
-    /* Botão de Pesquisar (Dentro do Form) */
+    /* Botão de Pesquisar */
     .stButton button {
         background-color: #2563eb !important;
         color: white !important;
         border-radius: 8px !important;
-        height: 46px; /* Mesma altura do input visualmente */
+        height: 48px; /* Ajuste fino para alinhar com a altura do input */
         font-weight: 600 !important;
         border: none !important;
         width: 100%;
         transition: background 0.3s;
+        margin-top: 1px; /* Pequeno ajuste de alinhamento vertical */
     }
     .stButton button:hover {
         background-color: #1d4ed8 !important;
     }
 
-    /* Cards e Resto do Layout */
+    /* Cards e Layout */
     .result-card {
         background-color: rgba(37, 99, 235, 0.05); 
         border: 1px solid rgba(37, 99, 235, 0.2);
@@ -125,6 +133,7 @@ st.markdown("""
     }
     </style>
 """, unsafe_allow_html=True)
+
 
 # --- FUNÇÃO PARA ACIONAR O GITHUB ACTIONS ---
 def trigger_update():
