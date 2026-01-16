@@ -29,24 +29,28 @@ st.markdown("""
     <style>
     .block-container { padding-top: 2rem; padding-bottom: 8rem; }
     
-    /* --- NOVA CORREÇÃO DA LOGO (V14 - Flexbox Robusto) --- */
-    .logo-container-v14 {
+    /* --- CORREÇÃO DEFINITIVA DA LOGO (V15) --- */
+    .logo-container-final {
         display: flex;
-        justify-content: center; /* Centraliza horizontalmente */
+        justify-content: center;
         align-items: center;
         width: 100%;
-        margin-bottom: 20px;
-        /* NENHUMA altura fixa aqui */
+        margin-bottom: 10px;
+        padding: 0 10px; /* Margem de segurança nas laterais */
     }
 
-    .logo-img-v14 {
-        max-width: 250px; /* No desktop, não passa disso */
-        width: 90%;       /* No mobile, ocupa 90% da tela */
-        height: auto;     /* CRUCIAL: Mantém a proporção, evita cortes */
-        object-fit: contain; /* Cinto de segurança extra contra cortes */
-        border-radius: 8px;
+    .logo-img-final {
+        /* REGRA DE OURO: Controlar pela altura para não ficar gigante */
+        height: auto; 
+        max-height: 80px; /* Altura máxima permitida (evita ficar enorme) */
+        
+        /* Segurança para Mobile */
+        width: auto;
+        max-width: 100%; /* Nunca ultrapassa a largura da tela */
+        
+        object-fit: contain; /* Garante que nunca corte */
     }
-    /* --- FIM DA NOVA CORREÇÃO --- */
+    /* --- FIM DA CORREÇÃO --- */
 
     
     /* INPUTS (Dark Mode Friendly) */
@@ -203,21 +207,19 @@ with st.sidebar:
     st.write("Não encontrou o que buscava ou notou algum erro na aplicação?")
     st.link_button("📧 Entrar em Contato", url=CONTACT_FORM_URL, use_container_width=True)
 
-# --- HEADER (Comst.image para evitar cortes) ---
-# Voltamos a usar HTML/CSS para controle total sobre o não-corte
+# --- HEADER (LOGOTIPO AJUSTADO) ---
 img_b64 = get_base64_image(LOGO_PATH)
 if img_b64:
     st.markdown(f"""
-        <div class="logo-container-v14">
-            <img src="data:image/png;base64,{img_b64}" class="logo-img-v14">
+        <div class="logo-container-final">
+            <img src="data:image/png;base64,{img_b64}" class="logo-img-final">
         </div>
     """, unsafe_allow_html=True)
 else:
-    # Fallback caso a imagem não seja encontrada
     st.markdown("""<div style='text-align: center; margin-bottom: 20px;'><h1 style='color:#0068c9;'>BT</h1></div>""", unsafe_allow_html=True)
 
 
-# --- TÍTULO E STATUS (Agrupados) ---
+# --- TÍTULO E STATUS ---
 data = load_data()
 status = load_status()
 
