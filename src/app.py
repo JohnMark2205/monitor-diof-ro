@@ -22,30 +22,30 @@ STATUS_FILE = os.path.join(root_dir, 'data', 'status.json')
 LOGO_PATH = os.path.join(root_dir, 'assets', 'logo_diof.png')
 
 # --- LINK DO FORMULÁRIO DE CONTATO ---
-CONTACT_FORM_URL = "https://forms.google.com/seu-formulario-aqui" 
+CONTACT_FORM_URL = "https://forms.gle/ZyjbbLg47n6uVNAz9"
 
 # --- CSS VISUAL ---
 st.markdown("""
     <style>
-    /* 1. CORREÇÃO PRINCIPAL: Espaço seguro no topo para não cortar na barra do Streamlit */
+    /* 1. LAYOUT GERAL */
     .block-container { 
-        padding-top: 4.5rem !important; /* Aumentado para empurrar o conteúdo para baixo */
+        padding-top: 4.5rem !important; 
         padding-bottom: 6rem; 
     }
     
-    /* 2. LOGO CENTRALIZADA E RESPONSIVA */
+    /* 2. LOGO */
     .logo-box {
         text-align: center;
         width: 100%;
         margin-bottom: 15px;
     }
     .logo-box img {
-        max-width: 300px; /* Tamanho ideal no Desktop */
-        width: 80%;       /* Tamanho seguro no Mobile (não vaza a tela) */
-        height: auto;     /* Mantém proporção correta */
+        max-width: 300px;
+        width: 80%;
+        height: auto;
     }
 
-    /* INPUTS (Dark Mode Friendly) */
+    /* 3. INPUTS (Busca) */
     div[data-baseweb="input"] {
         background-color: transparent !important;
         border: 1px solid rgba(255, 255, 255, 0.2) !important;
@@ -60,7 +60,7 @@ st.markdown("""
         caret-color: #2563eb !important;
     }
     
-    /* BOTÕES */
+    /* 4. BOTÕES */
     .stButton button {
         background-color: #2563eb !important;
         color: white !important;
@@ -74,7 +74,7 @@ st.markdown("""
     }
     .stButton button:hover { background-color: #1d4ed8 !important; }
 
-    /* CARDS DE RESULTADO */
+    /* 5. CARDS DE RESULTADO */
     .result-card {
         background-color: rgba(37, 99, 235, 0.05); 
         border: 1px solid rgba(37, 99, 235, 0.2);
@@ -104,11 +104,32 @@ st.markdown("""
         background-color: rgba(37, 99, 235, 0.05); border-radius: 8px;
     }
     
-    /* TEXTOS DE STATUS */
-    .status-highlight {
-        color: #34d399; /* Verde Suave */
-        font-weight: 600;
+    /* 6. --- NOVA LEITURA RÁPIDA (Mobile Friendly) --- */
+    .mobile-read-box {
+        background-color: rgba(0, 0, 0, 0.3); /* Fundo escuro para destacar */
+        color: #f8fafc !important; /* Branco Gelo (Muito legível) */
+        padding: 16px;
+        border-radius: 8px;
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        
+        font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+        font-size: 0.95rem;
+        line-height: 1.6; /* Mais espaço entre linhas para não cansar a vista */
+        
+        max-height: 400px; /* Altura máxima */
+        overflow-y: auto;  /* Scroll nativo suave */
+        white-space: pre-wrap; /* Mantém parágrafos originais */
+        
+        margin-top: 10px;
+        box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
     }
+    /* Scrollbar Bonita para o Leitor */
+    .mobile-read-box::-webkit-scrollbar { width: 6px; }
+    .mobile-read-box::-webkit-scrollbar-track { background: transparent; }
+    .mobile-read-box::-webkit-scrollbar-thumb { background-color: #475569; border-radius: 10px; }
+    /* --- FIM --- */
+    
+    .status-highlight { color: #34d399; font-weight: 600; }
     
     /* FOOTER */
     .footer {
@@ -123,6 +144,7 @@ st.markdown("""
     @media (prefers-color-scheme: light) {
         .result-card { background-color: #f0f9ff; border: 1px solid #bae6fd; }
         .snippet-box { background: #f1f5f9; color: #374151; border: 1px solid #e2e8f0; }
+        .mobile-read-box { background-color: #ffffff; color: #1e293b !important; border: 1px solid #cbd5e1; }
         .footer { background-color: rgba(255, 255, 255, 0.98); color: #4b5563; border-top: 1px solid #e5e7eb; }
         .footer-credits { color: #1f2937; }
         .stTextInput input { color: #1e293b !important; } 
@@ -197,9 +219,9 @@ with st.sidebar:
     st.divider()
     st.write("**Precisa de ajuda?**")
     st.write("Não encontrou o que buscava ou notou algum erro na aplicação?")
-    st.link_button("📧 Entrar em Contato", url="https://forms.gle/jqeyA11N5gB4WEmF9", use_container_width=True)
+    st.link_button("📧 Entrar em Contato", url=CONTACT_FORM_URL, use_container_width=True)
 
-# --- HEADER (IMAGEM COM MARGEM CORRIGIDA) ---
+# --- HEADER ---
 img_b64 = get_base64_image(LOGO_PATH)
 if img_b64:
     st.markdown(f"""
@@ -209,7 +231,6 @@ if img_b64:
     """, unsafe_allow_html=True)
 else:
     st.markdown("""<div style='text-align: center; margin-bottom: 20px;'><h1 style='color:#0068c9;'>BT</h1></div>""", unsafe_allow_html=True)
-
 
 # --- TÍTULO E STATUS ---
 data = load_data()
@@ -297,10 +318,19 @@ if submit_button or query:
 </div>
 """
                 st.markdown(html_card, unsafe_allow_html=True)
+                
+                # --- LEITURA RÁPIDA ATUALIZADA (DIV HTML) ---
                 if res.get('full_text'):
                     with st.expander(f"📱 Leitura Rápida (Pág. {first_page})"):
-                        st.text_area("Conteúdo:", value=res['full_text'], height=300, disabled=True, label_visibility="collapsed")
-                        st.caption("Texto extraído automaticamente.")
+                        # Substituindo st.text_area por HTML puro estilizado
+                        st.markdown(f"""
+                        <div class="mobile-read-box">
+                            {res['full_text']}
+                        </div>
+                        <p style="font-size:0.7rem; color:#9ca3af; margin-top:5px; text-align:center;">
+                            Texto extraído automaticamente. Role para ler.
+                        </p>
+                        """, unsafe_allow_html=True)
         else:
             st.warning(f"O termo **'{query}'** não foi encontrado nos documentos recentes.")
 
