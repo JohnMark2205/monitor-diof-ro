@@ -255,7 +255,7 @@ with c2:
     """, unsafe_allow_html=True)
 
     if data:
-        st.info(f"📂 **Escopo:** Monitorando as **{len(data)} últimas edições** (apenas capa do portal).")
+        st.info(f"📂 **Escopo:** Monitorando as **{len(data)} últimas edições**.")
     else:
         st.warning("⚠️ Base de dados vazia.")
 
