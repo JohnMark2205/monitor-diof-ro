@@ -5,7 +5,7 @@ import base64
 from datetime import datetime
 import requests
 import time
-import re  # Novo import para extrair datas via Regex
+import re
 
 # --- CONFIGURAÇÃO DA PÁGINA (LAYOUT WIDE) ---
 st.set_page_config(
@@ -25,7 +25,7 @@ LOGO_PATH = os.path.join(root_dir, 'assets', 'logo_diof.png')
 # --- LINK DO FORMULÁRIO DE CONTATO ---
 CONTACT_FORM_URL = "https://forms.gle/ZyjbbLg47n6uVNAz9"
 
-# --- CSS VISUAL (V29 - CLEAN CARD) ---
+# --- CSS VISUAL ---
 st.markdown("""
     <style>
     /* 1. LAYOUT GERAL */
@@ -47,10 +47,38 @@ st.markdown("""
         text-align: center; font-size: 0.9rem; opacity: 0.7; margin-bottom: 5px;
     }
     .status-text {
-        text-align: center; font-size: 0.8rem; font-family: monospace; color: #9ca3af; margin-bottom: 30px;
+        text-align: center; font-size: 0.8rem; font-family: monospace; color: #9ca3af; margin-bottom: 20px;
     }
 
-    /* 4. INPUTS */
+    /* 4. MENSAGEM DE ESCOPO */
+    .scope-container {
+        display: flex;
+        justify-content: center; 
+        width: 100%;
+        margin-bottom: 30px;
+    }
+    .custom-info-box {
+        background-color: rgba(37, 99, 235, 0.15); 
+        border: 1px solid rgba(37, 99, 235, 0.3);
+        color: #bfdbfe; 
+        padding: 8px 20px;
+        border-radius: 8px; 
+        font-size: 0.9rem;
+        width: fit-content; 
+        text-align: center;
+    }
+    .custom-warning-box {
+        background-color: rgba(234, 179, 8, 0.15); 
+        border: 1px solid rgba(234, 179, 8, 0.3);
+        color: #fef08a;
+        padding: 8px 20px;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        width: fit-content;
+        text-align: center;
+    }
+
+    /* 5. INPUTS */
     div[data-baseweb="input"] { border-radius: 8px !important; }
     div[data-baseweb="input"]:focus-within {
         border: 2px solid #2563eb !important;
@@ -169,6 +197,12 @@ st.markdown("""
         .status-highlight { color: #059669; }
         .found-text { color: #334155; }
         .found-highlight { color: #059669; }
+        
+        .custom-info-box {
+            background-color: #eff6ff;
+            border: 1px solid #bfdbfe;
+            color: #1e40af;
+        }
     }
     </style>
 """, unsafe_allow_html=True)
@@ -186,9 +220,7 @@ def load_data():
         with open(DB_FILE, "r", encoding="utf-8") as f:
             content = f.read().strip()
             all_data = json.loads(content) if content else []
-            # TRAVA DE 30 EDIÇÕES: 
-            # Pega apenas os 30 primeiros itens (mais recentes) da base de dados.
-            return all_data[:30] 
+            return all_data[:30] # Pega apenas as 30 últimas edições (Limita escopo na visualização)
     except: return []
 
 def load_status():
@@ -257,8 +289,39 @@ with c2:
         <p class="status-text">✅ Última verificação: <span class="status-highlight">{global_last_run}</span></p>
     """, unsafe_allow_html=True)
 
+    # --- MENSAGEM DE ESCOPO CENTRALIZADA COM DATA DINÂMICA E BEM FORMATADA ---
     if data:
-        st.info(f"📂 **Escopo:** Monitorando as **{len(data)} últimas edições** (apenas capa do portal).")
+        num_edicoes = len(data)
+        edicao_mais_antiga = data[-1] # Pega o último item da lista
+        data_inicio = "Data desconhecida"
+        
+        # Tentativa 1: Pegar campos de data nativos e formatar para DD/MM/AAAA
+        raw_date = edicao_mais_antiga.get('date') or edicao_mais_antiga.get('scraped_at')
+        if raw_date and raw_date != 'Data desc.':
+            try:
+                date_part = raw_date.split(" ")[0] # Pega só a parte da data, ignorando a hora
+                if "-" in date_part and len(date_part.split("-")[0]) == 4: # Verifica se está AAAA-MM-DD
+                    ano, mes, dia = date_part.split("-")
+                    data_inicio = f"{dia}/{mes}/{ano}"
+                else:
+                    data_inicio = date_part
+            except:
+                data_inicio = raw_date.split(" ")[0]
+        else:
+            # Tentativa 2: Pegar do título usando regex
+            titulo = edicao_mais_antiga.get('title', '')
+            match = re.search(r'\d{2}[-/]\d{2}[-/]\d{4}', titulo)
+            if match:
+                data_inicio = match.group(0).replace('-', '/')
+
+        # Exibição do aviso atualizado (removendo a mensagem 'apenas capa')
+        st.markdown(f"""
+            <div class="scope-container">
+                <div class="custom-info-box">
+                    📂 <strong>Escopo:</strong> Monitorando as <strong>{num_edicoes} últimas edições</strong> (desde {data_inicio}).
+                </div>
+            </div>
+        """, unsafe_allow_html=True)
     else:
         st.markdown("""
             <div class="scope-container">
@@ -280,7 +343,7 @@ with c_center:
         with col_btn:
             submit_button = st.form_submit_button(label="🔍 Pesquisar")
 
-# --- RESULTADOS (V29 - LAYOUT LIMPO) ---
+# --- RESULTADOS ---
 if submit_button or query:
     st.divider()
     if not query:
