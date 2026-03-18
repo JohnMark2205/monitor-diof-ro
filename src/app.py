@@ -25,7 +25,7 @@ LOGO_PATH = os.path.join(root_dir, 'assets', 'logo_diof.png')
 # --- LINK DO FORMULÁRIO DE CONTATO ---
 CONTACT_FORM_URL = "https://forms.gle/ZyjbbLg47n6uVNAz9"
 
-# --- CSS VISUAL (V31) ---
+# --- CSS VISUAL (V29 - CLEAN CARD) ---
 st.markdown("""
     <style>
     /* 1. LAYOUT GERAL */
@@ -47,38 +47,10 @@ st.markdown("""
         text-align: center; font-size: 0.9rem; opacity: 0.7; margin-bottom: 5px;
     }
     .status-text {
-        text-align: center; font-size: 0.8rem; font-family: monospace; color: #9ca3af; margin-bottom: 20px;
+        text-align: center; font-size: 0.8rem; font-family: monospace; color: #9ca3af; margin-bottom: 30px;
     }
 
-    /* 4. MENSAGEM DE ESCOPO */
-    .scope-container {
-        display: flex;
-        justify-content: center; 
-        width: 100%;
-        margin-bottom: 30px;
-    }
-    .custom-info-box {
-        background-color: rgba(37, 99, 235, 0.15); 
-        border: 1px solid rgba(37, 99, 235, 0.3);
-        color: #bfdbfe; 
-        padding: 8px 20px;
-        border-radius: 8px; 
-        font-size: 0.9rem;
-        width: fit-content; 
-        text-align: center;
-    }
-    .custom-warning-box {
-        background-color: rgba(234, 179, 8, 0.15); 
-        border: 1px solid rgba(234, 179, 8, 0.3);
-        color: #fef08a;
-        padding: 8px 20px;
-        border-radius: 8px;
-        font-size: 0.9rem;
-        width: fit-content;
-        text-align: center;
-    }
-
-    /* 5. INPUTS */
+    /* 4. INPUTS */
     div[data-baseweb="input"] { border-radius: 8px !important; }
     div[data-baseweb="input"]:focus-within {
         border: 2px solid #2563eb !important;
@@ -197,12 +169,6 @@ st.markdown("""
         .status-highlight { color: #059669; }
         .found-text { color: #334155; }
         .found-highlight { color: #059669; }
-        
-        .custom-info-box {
-            background-color: #eff6ff;
-            border: 1px solid #bfdbfe;
-            color: #1e40af;
-        }
     }
     </style>
 """, unsafe_allow_html=True)
@@ -291,32 +257,8 @@ with c2:
         <p class="status-text">✅ Última verificação: <span class="status-highlight">{global_last_run}</span></p>
     """, unsafe_allow_html=True)
 
-    # --- MENSAGEM DE ESCOPO CENTRALIZADA COM DATA DINÂMICA ---
     if data:
-        num_edicoes = len(data)
-        edicao_mais_antiga = data[-1] # A última da lista truncada em 30
-        
-        # 1. Tenta extrair a data dos campos nativos
-        data_inicio = edicao_mais_antiga.get('date') or edicao_mais_antiga.get('scraped_at')
-        if data_inicio:
-            data_inicio = data_inicio.split(" ")[0] # Se tiver hora, remove
-        else:
-            # 2. Se falhar, procura por um padrão de data (DD/MM/AAAA ou DD-MM-AAAA) no título
-            titulo = edicao_mais_antiga.get('title', '')
-            match = re.search(r'\d{2}[-/]\d{2}[-/]\d{4}', titulo)
-            if match:
-                data_inicio = match.group(0).replace('-', '/')
-            else:
-                data_inicio = "Data desconhecida"
-
-        # Mensagem HTML atualizada com a data
-        st.markdown(f"""
-            <div class="scope-container">
-                <div class="custom-info-box">
-                    📂 <strong>Escopo:</strong> Monitorando as <strong>{num_edicoes} últimas edições</strong> (desde <em>{data_inicio}</em>).
-                </div>
-            </div>
-        """, unsafe_allow_html=True)
+        st.info(f"📂 **Escopo:** Monitorando as **{len(data)} últimas edições** (apenas capa do portal).")
     else:
         st.markdown("""
             <div class="scope-container">
@@ -338,7 +280,7 @@ with c_center:
         with col_btn:
             submit_button = st.form_submit_button(label="🔍 Pesquisar")
 
-# --- RESULTADOS (V31) ---
+# --- RESULTADOS (V29 - LAYOUT LIMPO) ---
 if submit_button or query:
     st.divider()
     if not query:
