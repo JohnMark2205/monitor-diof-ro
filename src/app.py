@@ -5,6 +5,7 @@ import base64
 from datetime import datetime
 import requests
 import time
+import re  # Novo import para extrair datas via Regex
 
 # --- CONFIGURAÇÃO DA PÁGINA (LAYOUT WIDE) ---
 st.set_page_config(
@@ -24,7 +25,7 @@ LOGO_PATH = os.path.join(root_dir, 'assets', 'logo_diof.png')
 # --- LINK DO FORMULÁRIO DE CONTATO ---
 CONTACT_FORM_URL = "https://forms.gle/ZyjbbLg47n6uVNAz9"
 
-# --- CSS VISUAL (V29 - CLEAN CARD) ---
+# --- CSS VISUAL (V31) ---
 st.markdown("""
     <style>
     /* 1. LAYOUT GERAL */
@@ -46,10 +47,38 @@ st.markdown("""
         text-align: center; font-size: 0.9rem; opacity: 0.7; margin-bottom: 5px;
     }
     .status-text {
-        text-align: center; font-size: 0.8rem; font-family: monospace; color: #9ca3af; margin-bottom: 30px;
+        text-align: center; font-size: 0.8rem; font-family: monospace; color: #9ca3af; margin-bottom: 20px;
     }
 
-    /* 4. INPUTS */
+    /* 4. MENSAGEM DE ESCOPO */
+    .scope-container {
+        display: flex;
+        justify-content: center; 
+        width: 100%;
+        margin-bottom: 30px;
+    }
+    .custom-info-box {
+        background-color: rgba(37, 99, 235, 0.15); 
+        border: 1px solid rgba(37, 99, 235, 0.3);
+        color: #bfdbfe; 
+        padding: 8px 20px;
+        border-radius: 8px; 
+        font-size: 0.9rem;
+        width: fit-content; 
+        text-align: center;
+    }
+    .custom-warning-box {
+        background-color: rgba(234, 179, 8, 0.15); 
+        border: 1px solid rgba(234, 179, 8, 0.3);
+        color: #fef08a;
+        padding: 8px 20px;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        width: fit-content;
+        text-align: center;
+    }
+
+    /* 5. INPUTS */
     div[data-baseweb="input"] { border-radius: 8px !important; }
     div[data-baseweb="input"]:focus-within {
         border: 2px solid #2563eb !important;
@@ -57,7 +86,7 @@ st.markdown("""
     }
     .stTextInput input { caret-color: #2563eb !important; }
     
-    /* 5. BOTÃO DE PESQUISA */
+    /* 6. BOTÃO DE PESQUISA */
     .stButton button {
         background-color: #2563eb !important;
         color: white !important;
@@ -72,7 +101,7 @@ st.markdown("""
     }
     .stButton button:hover { background-color: #1d4ed8 !important; }
 
-    /* 6. ESTILO DO CARD (INTERNO) */
+    /* 7. ESTILO DO CARD (INTERNO) */
     .card-title {
         font-size: 1.05rem;
         font-weight: 700;
@@ -92,19 +121,19 @@ st.markdown("""
         padding-bottom: 8px;
     }
     
-    /* 7. TEXTO DE CONTEXTO ("Encontrado em...") */
+    /* 8. TEXTO DE CONTEXTO */
     .found-text {
         font-size: 0.85rem;
-        color: #e2e8f0; /* Cor clara para destaque */
+        color: #e2e8f0; 
         margin-bottom: 8px;
         display: block;
     }
     .found-highlight {
-        color: #34d399; /* Verde para o número */
+        color: #34d399; 
         font-weight: 700;
     }
     
-    /* 8. BOTÃO PDF */
+    /* 9. BOTÃO PDF */
     .pdf-button {
         display: block; width: 100%; 
         background-color: #2563eb; 
@@ -123,7 +152,7 @@ st.markdown("""
         transform: translateY(-1px);
     }
     
-    /* 9. LEITURA RÁPIDA */
+    /* 10. LEITURA RÁPIDA */
     .mobile-read-box {
         background-color: #0f172a; 
         color: #f1f5f9;            
@@ -143,12 +172,12 @@ st.markdown("""
     .mobile-read-box::-webkit-scrollbar-track { background: #0f172a; }
     .mobile-read-box::-webkit-scrollbar-thumb { background-color: #2563eb; border-radius: 4px; }
 
-    /* 10. SELETOR DE PÁGINAS */
+    /* 11. SELETOR DE PÁGINAS */
     div[role="radiogroup"] {
         margin-bottom: 15px;
     }
     div[role="radiogroup"] label {
-        padding: 4px 12px; /* Botões um pouco maiores para facilitar toque */
+        padding: 4px 12px; 
         font-size: 0.85rem;
         border-radius: 12px !important;
     }
@@ -168,6 +197,12 @@ st.markdown("""
         .status-highlight { color: #059669; }
         .found-text { color: #334155; }
         .found-highlight { color: #059669; }
+        
+        .custom-info-box {
+            background-color: #eff6ff;
+            border: 1px solid #bfdbfe;
+            color: #1e40af;
+        }
     }
     </style>
 """, unsafe_allow_html=True)
@@ -184,7 +219,10 @@ def load_data():
     try:
         with open(DB_FILE, "r", encoding="utf-8") as f:
             content = f.read().strip()
-            return json.loads(content) if content else []
+            all_data = json.loads(content) if content else []
+            # TRAVA DE 30 EDIÇÕES: 
+            # Pega apenas os 30 primeiros itens (mais recentes) da base de dados.
+            return all_data[:30] 
     except: return []
 
 def load_status():
@@ -208,7 +246,6 @@ def search_local(term, data):
                     page_num = str(page['number']).strip()
                     matches_map[page_num] = page['text']
                     found_any = True
-                    # Snippet logic removed from view, but kept here if needed for debugging
 
             if not found_any and 'content' in doc:
                  if term_lower in doc['content'].lower():
@@ -254,10 +291,40 @@ with c2:
         <p class="status-text">✅ Última verificação: <span class="status-highlight">{global_last_run}</span></p>
     """, unsafe_allow_html=True)
 
+    # --- MENSAGEM DE ESCOPO CENTRALIZADA COM DATA DINÂMICA ---
     if data:
-        st.info(f"📂 **Escopo:** Monitorando as **{len(data)} últimas edições** (apenas capa do portal).")
+        num_edicoes = len(data)
+        edicao_mais_antiga = data[-1] # A última da lista truncada em 30
+        
+        # 1. Tenta extrair a data dos campos nativos
+        data_inicio = edicao_mais_antiga.get('date') or edicao_mais_antiga.get('scraped_at')
+        if data_inicio:
+            data_inicio = data_inicio.split(" ")[0] # Se tiver hora, remove
+        else:
+            # 2. Se falhar, procura por um padrão de data (DD/MM/AAAA ou DD-MM-AAAA) no título
+            titulo = edicao_mais_antiga.get('title', '')
+            match = re.search(r'\d{2}[-/]\d{2}[-/]\d{4}', titulo)
+            if match:
+                data_inicio = match.group(0).replace('-', '/')
+            else:
+                data_inicio = "Data desconhecida"
+
+        # Mensagem HTML atualizada com a data
+        st.markdown(f"""
+            <div class="scope-container">
+                <div class="custom-info-box">
+                    📂 <strong>Escopo:</strong> Monitorando as <strong>{num_edicoes} últimas edições</strong> (desde <em>{data_inicio}</em>).
+                </div>
+            </div>
+        """, unsafe_allow_html=True)
     else:
-        st.warning("⚠️ Base de dados vazia.")
+        st.markdown("""
+            <div class="scope-container">
+                <div class="custom-warning-box">
+                    ⚠️ Base de dados vazia.
+                </div>
+            </div>
+        """, unsafe_allow_html=True)
 
 # --- FORM DE BUSCA ---
 c_left, c_center, c_right = st.columns([1, 3, 1])
@@ -271,7 +338,7 @@ with c_center:
         with col_btn:
             submit_button = st.form_submit_button(label="🔍 Pesquisar")
 
-# --- RESULTADOS (V29 - LAYOUT LIMPO) ---
+# --- RESULTADOS (V31) ---
 if submit_button or query:
     st.divider()
     if not query:
@@ -305,10 +372,7 @@ if submit_button or query:
                         selected_page_num = available_pages[0]
 
                         if len(available_pages) > 1:
-                            # Texto de contexto destacado
                             st.markdown(f"""<span class="found-text">Encontrado em <span class="found-highlight">{len(available_pages)}</span> páginas:</span>""", unsafe_allow_html=True)
-                            
-                            # Botões de rádio horizontais
                             selected_page_num = st.radio(
                                 "Seletor de páginas", 
                                 options=available_pages,
@@ -319,7 +383,7 @@ if submit_button or query:
                         else:
                              st.markdown(f"""<span class="found-text">Encontrado na página <span class="found-highlight">{selected_page_num}</span></span>""", unsafe_allow_html=True)
                         
-                        # 3. BOTÃO DE AÇÃO (ABRIR PDF)
+                        # 3. BOTÃO DE AÇÃO
                         if selected_page_num != "9999" and selected_page_num.isdigit():
                             link = f"{base_url}#page={selected_page_num}"
                             btn_txt = f"Abrir Pág. {selected_page_num}"
@@ -329,7 +393,7 @@ if submit_button or query:
                         
                         st.markdown(f"""<a href="{link}" target="_blank" class="pdf-button">{btn_txt}</a>""", unsafe_allow_html=True)
 
-                        # 4. EXPANDER (Discreto no final)
+                        # 4. EXPANDER
                         full_text = res['matches'].get(selected_page_num, "...")
                         with st.expander("📱 Ler Texto"):
                             st.markdown(f"""<div class="mobile-read-box">{full_text}</div>""", unsafe_allow_html=True)
