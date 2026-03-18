@@ -25,7 +25,7 @@ LOGO_PATH = os.path.join(root_dir, 'assets', 'logo_diof.png')
 # --- LINK DO FORMULÁRIO DE CONTATO ---
 CONTACT_FORM_URL = "https://forms.gle/ZyjbbLg47n6uVNAz9"
 
-# --- CSS VISUAL ---
+# --- CSS VISUAL (V32) ---
 st.markdown("""
     <style>
     /* 1. LAYOUT GERAL */
@@ -50,7 +50,7 @@ st.markdown("""
         text-align: center; font-size: 0.8rem; font-family: monospace; color: #9ca3af; margin-bottom: 20px;
     }
 
-    /* 4. MENSAGEM DE ESCOPO */
+    /* 4. MENSAGEM DE ESCOPO CENTRALIZADA E AJUSTADA */
     .scope-container {
         display: flex;
         justify-content: center; 
@@ -173,9 +173,7 @@ st.markdown("""
     .mobile-read-box::-webkit-scrollbar-thumb { background-color: #2563eb; border-radius: 4px; }
 
     /* 11. SELETOR DE PÁGINAS */
-    div[role="radiogroup"] {
-        margin-bottom: 15px;
-    }
+    div[role="radiogroup"] { margin-bottom: 15px; }
     div[role="radiogroup"] label {
         padding: 4px 12px; 
         font-size: 0.85rem;
@@ -197,7 +195,6 @@ st.markdown("""
         .status-highlight { color: #059669; }
         .found-text { color: #334155; }
         .found-highlight { color: #059669; }
-        
         .custom-info-box {
             background-color: #eff6ff;
             border: 1px solid #bfdbfe;
@@ -207,27 +204,97 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# --- FUNÇÕES ---
+# --- FUNÇÕES NUCLEARES E DE DATA ---
 def get_base64_image(image_path):
     if os.path.exists(image_path):
         with open(image_path, "rb") as img_file:
             return base64.b64encode(img_file.read()).decode()
     return None
 
-def load_data():
-    if not os.path.exists(DB_FILE): return []
-    try:
-        with open(DB_FILE, "r", encoding="utf-8") as f:
-            content = f.read().strip()
-            all_data = json.loads(content) if content else []
-            return all_data[:30] # Pega apenas as 30 últimas edições (Limita escopo na visualização)
-    except: return []
-
 def load_status():
     if not os.path.exists(STATUS_FILE): return None
     try:
         with open(STATUS_FILE, "r", encoding="utf-8") as f: return json.load(f)
     except: return None
+
+def filter_last_month_data(all_data, status_data):
+    """
+    Filtra a base de dados para retornar apenas documentos do último mês exato,
+    baseado na data do status do robô.
+    """
+    # 1. Define a data de referência (da última execução do robô)
+    ref_date = datetime.now()
+    if status_data and 'last_run' in status_data:
+        try:
+            # Ex: "18/03/2026 12:57:48"
+            ref_date = datetime.strptime(status_data['last_run'], "%d/%m/%Y %H:%M:%S")
+        except: pass
+    
+    # 2. Calcula retroativamente o dia exato no mês passado
+    month = ref_date.month - 1
+    year = ref_date.year
+    if month == 0:
+        month = 12
+        year -= 1
+    day = ref_date.day
+    
+    # Lida com dias que não existem (ex: 31 de Fevereiro -> vira 28 de Fevereiro)
+    while True:
+        try:
+            limit_date = ref_date.replace(year=year, month=month, day=day)
+            break
+        except ValueError:
+            day -= 1
+            
+    limit_date_str = limit_date.strftime("%d/%m/%Y")
+    
+    # 3. Filtra os documentos
+    filtered_data = []
+    for doc in all_data:
+        doc_date = None
+        
+        # Tenta pegar da data do scraper
+        raw_date = doc.get('date') or doc.get('scraped_at')
+        if raw_date and raw_date != 'Data desc.':
+            date_part = raw_date.split(" ")[0]
+            try:
+                if "-" in date_part and len(date_part.split("-")[0]) == 4:
+                    doc_date = datetime.strptime(date_part, "%Y-%m-%d")
+                elif "/" in date_part:
+                    doc_date = datetime.strptime(date_part, "%d/%m/%Y")
+            except: pass
+        
+        # Fallback: Tenta achar a data no título via Regex (ex: DOE-18-03-2026.pdf)
+        if not doc_date:
+            titulo = doc.get('title', '')
+            match = re.search(r'(\d{2})[-/](\d{2})[-/](\d{4})', titulo)
+            if match:
+                dia, mes, ano = match.groups()
+                try: doc_date = datetime(int(ano), int(mes), int(dia))
+                except: pass
+        
+        # Só adiciona se a data do doc for maior ou igual a exatamente 1 mês atrás
+        if doc_date:
+            if doc_date.date() >= limit_date.date():
+                filtered_data.append(doc)
+        else:
+            # Se não conseguiu ler a data do doc, assume que é recente por segurança
+            filtered_data.append(doc)
+            
+    return filtered_data, limit_date_str
+
+def load_filtered_data():
+    if not os.path.exists(DB_FILE): return [], "Data desconhecida"
+    try:
+        with open(DB_FILE, "r", encoding="utf-8") as f:
+            content = f.read().strip()
+            all_data = json.loads(content) if content else []
+            
+            # Chama a função inteligente que corta os dados
+            status_data = load_status()
+            filtered, limit_date_str = filter_last_month_data(all_data, status_data)
+            return filtered, limit_date_str
+    except: return [], "Data desconhecida"
 
 def search_local(term, data):
     results = []
@@ -279,7 +346,6 @@ with c2:
     else:
         st.markdown("""<div style='text-align: center; margin-bottom: 20px;'><h1 style='color:#0068c9;'>BT</h1></div>""", unsafe_allow_html=True)
 
-    data = load_data()
     status = load_status()
     global_last_run = status['last_run'] if (status and 'last_run' in status) else "Data desconhecida"
 
@@ -289,36 +355,14 @@ with c2:
         <p class="status-text">✅ Última verificação: <span class="status-highlight">{global_last_run}</span></p>
     """, unsafe_allow_html=True)
 
-    # --- MENSAGEM DE ESCOPO CENTRALIZADA COM DATA DINÂMICA E BEM FORMATADA ---
+    # --- MENSAGEM DE ESCOPO 1 MÊS ---
+    data, date_limit_str = load_filtered_data()
+    
     if data:
-        num_edicoes = len(data)
-        edicao_mais_antiga = data[-1] # Pega o último item da lista
-        data_inicio = "Data desconhecida"
-        
-        # Tentativa 1: Pegar campos de data nativos e formatar para DD/MM/AAAA
-        raw_date = edicao_mais_antiga.get('date') or edicao_mais_antiga.get('scraped_at')
-        if raw_date and raw_date != 'Data desc.':
-            try:
-                date_part = raw_date.split(" ")[0] # Pega só a parte da data, ignorando a hora
-                if "-" in date_part and len(date_part.split("-")[0]) == 4: # Verifica se está AAAA-MM-DD
-                    ano, mes, dia = date_part.split("-")
-                    data_inicio = f"{dia}/{mes}/{ano}"
-                else:
-                    data_inicio = date_part
-            except:
-                data_inicio = raw_date.split(" ")[0]
-        else:
-            # Tentativa 2: Pegar do título usando regex
-            titulo = edicao_mais_antiga.get('title', '')
-            match = re.search(r'\d{2}[-/]\d{2}[-/]\d{4}', titulo)
-            if match:
-                data_inicio = match.group(0).replace('-', '/')
-
-        # Exibição do aviso atualizado (removendo a mensagem 'apenas capa')
         st.markdown(f"""
             <div class="scope-container">
                 <div class="custom-info-box">
-                    📂 <strong>Escopo:</strong> Monitorando as <strong>{num_edicoes} últimas edições</strong> (desde {data_inicio}).
+                    📂 <strong>Escopo:</strong> Monitorando as <strong>{len(data)} edições do último mês</strong> (desde {date_limit_str}).
                 </div>
             </div>
         """, unsafe_allow_html=True)
@@ -326,7 +370,7 @@ with c2:
         st.markdown("""
             <div class="scope-container">
                 <div class="custom-warning-box">
-                    ⚠️ Base de dados vazia.
+                    ⚠️ Base de dados vazia para o último mês.
                 </div>
             </div>
         """, unsafe_allow_html=True)
@@ -349,7 +393,7 @@ if submit_button or query:
     if not query:
         st.warning("⚠️ Digite algo para pesquisar.")
     elif not data:
-        st.error("Sem dados para pesquisar.")
+        st.error("Sem dados no período para pesquisar.")
     else:
         start_time = datetime.now()
         results = search_local(query, data)
