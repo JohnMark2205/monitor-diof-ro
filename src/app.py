@@ -41,7 +41,7 @@ st.markdown("""
     
     /* Garantindo que o título não tenha links mesmo se for div */
     .main-title { text-align: center; font-weight: 800; font-size: 2rem; margin-bottom: 0; color: #f8fafc; }
-    .status-text { text-align: center; font-size: 0.8rem; font-family: monospace; color: #9ca3af; margin-bottom: 30px; }
+    .status-text { text-align: center; font-size: 0.85rem; font-family: monospace; color: #9ca3af; margin-bottom: 30px; }
     
     /* === BOTÃO FLUTUANTE === */
     .floating-btn {
@@ -229,14 +229,18 @@ with c2:
 
     status = load_status()
     global_last_run = status['last_run'] if (status and 'last_run' in status) else "Data desconhecida"
+    
+    # PEGAR DADOS E DATA DE INÍCIO ANTES DE RENDERIZAR O TEXTO
+    data, date_limit_str = load_filtered_data()
 
-    # SUBSTITUIÇÃO DA TAG <H1> POR <DIV> PARA MATAR O LINK ÂNCORA DO STREAMLIT
+    # TÍTULO SEM LINK E SUBTÍTULO COM A DATA DE INÍCIO EXPLICITA
     st.markdown(f"""
         <div class="main-title">Monitor DIOF-RO</div>
-        <p class="status-text">✅ Escopo: Último mês (Atualizado em: <span class="status-highlight">{global_last_run}</span>)</p>
+        <p class="status-text">
+            ✅ Escopo: Último mês (desde <strong>{date_limit_str}</strong>) &nbsp;&nbsp;•&nbsp;&nbsp; Atualizado em: <span class="status-highlight">{global_last_run}</span>
+        </p>
     """, unsafe_allow_html=True)
 
-data, date_limit_str = load_filtered_data()
 
 # --- PESQUISA ---
 c_search_l, c_search_c, c_search_r = st.columns([1, 3, 1])
