@@ -32,15 +32,14 @@ LOGO_PATH = os.path.join(root_dir, 'assets', 'logo_diof.png')
 CONTACT_FORM_URL = "https://forms.gle/ZyjbbLg47n6uVNAz9"
 ALERT_FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLSdeDFLj0NoYpT5HhwFisnSNeCxjE2d-9AueiRAH99Rt5PFuCQ/viewform?usp=header" 
 
-# --- CSS VISUAL (V36.2) ---
+# --- CSS VISUAL ---
 st.markdown("""
     <style>
-    /* 🚫 REMOVER ÍCONE DE LINK NO TÍTULO (Comportamento padrão do Streamlit) */
-    a.header-anchor { display: none !important; }
-
     .block-container { padding-top: 3rem !important; padding-bottom: 6rem; max-width: 1400px !important;}
     .logo-box { text-align: center; width: 100%; margin-bottom: 20px; }
     .logo-box img { max-width: 250px; width: 70%; height: auto; }
+    
+    /* Garantindo que o título não tenha links mesmo se for div */
     .main-title { text-align: center; font-weight: 800; font-size: 2rem; margin-bottom: 0; color: #f8fafc; }
     .status-text { text-align: center; font-size: 0.8rem; font-family: monospace; color: #9ca3af; margin-bottom: 30px; }
     
@@ -226,13 +225,14 @@ c1, c2, c3 = st.columns([1, 2, 1])
 with c2:
     img_b64 = get_base64_image(LOGO_PATH)
     if img_b64: st.markdown(f"""<div class="logo-box"><img src="data:image/png;base64,{img_b64}"></div>""", unsafe_allow_html=True)
-    else: st.markdown("""<div style='text-align: center; margin-bottom: 20px;'><h1 style='color:#0068c9;'>BT</h1></div>""", unsafe_allow_html=True)
+    else: st.markdown("""<div style='text-align: center; margin-bottom: 20px; font-weight: 800; font-size: 2rem; color:#0068c9;'>BT</div>""", unsafe_allow_html=True)
 
     status = load_status()
     global_last_run = status['last_run'] if (status and 'last_run' in status) else "Data desconhecida"
 
+    # SUBSTITUIÇÃO DA TAG <H1> POR <DIV> PARA MATAR O LINK ÂNCORA DO STREAMLIT
     st.markdown(f"""
-        <h1 class="main-title">Monitor DIOF-RO</h1>
+        <div class="main-title">Monitor DIOF-RO</div>
         <p class="status-text">✅ Escopo: Último mês (Atualizado em: <span class="status-highlight">{global_last_run}</span>)</p>
     """, unsafe_allow_html=True)
 
@@ -254,7 +254,6 @@ if submit_button or query:
     elif not data: 
         st.error("Sem dados no período para pesquisar.")
     else:
-        # Aumenta o contador de pesquisas
         if submit_button:
             st.session_state.pesquisa_realizada += 1
 
@@ -262,7 +261,6 @@ if submit_button or query:
         results = search_local(query, data)
         duration = (datetime.now() - start_time).total_seconds()
         
-        # --- GATILHO DO POP-UP (Aparece só na 1ª vez) ---
         if st.session_state.pesquisa_realizada == 1 and not st.session_state.modal_exibido:
             st.session_state.modal_exibido = True
             mostrar_modal_alerta(query, len(results) > 0)
