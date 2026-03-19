@@ -39,9 +39,35 @@ st.markdown("""
     .logo-box { text-align: center; width: 100%; margin-bottom: 20px; }
     .logo-box img { max-width: 250px; width: 70%; height: auto; }
     
-    /* Garantindo que o título não tenha links mesmo se for div */
-    .main-title { text-align: center; font-weight: 800; font-size: 2rem; margin-bottom: 0; color: #f8fafc; }
-    .status-text { text-align: center; font-size: 0.85rem; font-family: monospace; color: #9ca3af; margin-bottom: 30px; }
+    /* Título principal */
+    .main-title { text-align: center; font-weight: 800; font-size: 2rem; margin-bottom: 10px; color: #f8fafc; }
+    
+    /* === NOVOS BADGES RESPONSIVOS (V36.5) === */
+    .info-container {
+        display: flex;
+        flex-direction: row;
+        justify-content: center;
+        align-items: center;
+        gap: 15px;
+        margin-bottom: 30px;
+        flex-wrap: wrap; /* Faz quebrar de linha suavemente no celular */
+    }
+    .badge-scope {
+        background-color: rgba(59, 130, 246, 0.1); 
+        color: #93c5fd;
+        padding: 6px 14px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        border: 1px solid rgba(59, 130, 246, 0.3);
+    }
+    .badge-status {
+        background-color: rgba(16, 185, 129, 0.1); 
+        color: #6ee7b7;
+        padding: 6px 14px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        border: 1px solid rgba(16, 185, 129, 0.3);
+    }
     
     /* === BOTÃO FLUTUANTE === */
     .floating-btn {
@@ -83,7 +109,6 @@ st.markdown("""
     .pdf-button:hover { background-color: #1d4ed8; transform: translateY(-1px); }
     .mobile-read-box { background-color: #0f172a; color: #f1f5f9; padding: 12px; border-radius: 6px; border: 1px solid #334155; font-size: 0.85rem; line-height: 1.6; max-height: 300px; overflow-y: auto; white-space: pre-wrap; scrollbar-width: thin; scrollbar-color: #2563eb #0f172a; }
     
-    .status-highlight { color: #34d399; font-weight: 600; }
     .footer { text-align: center; margin-top: 50px; font-size: 0.8rem; color: #64748b; padding: 20px; border-top: 1px solid rgba(255,255,255,0.1); }
     
     @media (prefers-color-scheme: light) {
@@ -91,9 +116,12 @@ st.markdown("""
         .card-title { color: #2563eb; }
         .card-date { color: #64748b; border-bottom: 1px solid #e2e8f0; }
         .footer { border-top: 1px solid #e2e8f0; }
-        .status-highlight { color: #059669; }
         .found-text { color: #334155; }
         .found-highlight { color: #059669; }
+        
+        /* Ajuste dos badges para Light Mode */
+        .badge-scope { background-color: #eff6ff; color: #1e40af; border-color: #bfdbfe; }
+        .badge-status { background-color: #ecfdf5; color: #065f46; border-color: #a7f3d0; }
     }
     </style>
 """, unsafe_allow_html=True)
@@ -229,16 +257,15 @@ with c2:
 
     status = load_status()
     global_last_run = status['last_run'] if (status and 'last_run' in status) else "Data desconhecida"
-    
-    # PEGAR DADOS E DATA DE INÍCIO ANTES DE RENDERIZAR O TEXTO
     data, date_limit_str = load_filtered_data()
 
-    # TÍTULO SEM LINK E SUBTÍTULO COM A DATA DE INÍCIO EXPLICITA
+    # --- TÍTULO E BADGES RESPONSIVOS ---
     st.markdown(f"""
         <div class="main-title">Monitor DIOF-RO</div>
-        <p class="status-text">
-            ✅ Escopo: Último mês (desde <strong>{date_limit_str}</strong>) &nbsp;&nbsp;•&nbsp;&nbsp; Atualizado em: <span class="status-highlight">{global_last_run}</span>
-        </p>
+        <div class="info-container">
+            <div class="badge-scope">📂 <strong>Acervo:</strong> Último mês (desde {date_limit_str})</div>
+            <div class="badge-status">✅ <strong>Atualização:</strong> {global_last_run}</div>
+        </div>
     """, unsafe_allow_html=True)
 
 
