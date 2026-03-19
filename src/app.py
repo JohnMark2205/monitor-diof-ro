@@ -30,20 +30,21 @@ LOGO_PATH = os.path.join(root_dir, 'assets', 'logo_diof.png')
 
 # --- LINKS EXTERNOS ---
 CONTACT_FORM_URL = "https://forms.gle/ZyjbbLg47n6uVNAz9"
-
-# ✅ SEU LINK OFICIAL INSERIDO AQUI
 ALERT_FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLSdeDFLj0NoYpT5HhwFisnSNeCxjE2d-9AueiRAH99Rt5PFuCQ/viewform?usp=header" 
 
-# --- CSS VISUAL (V36 - BOTÃO FLUTUANTE) ---
+# --- CSS VISUAL (V36.2) ---
 st.markdown("""
     <style>
+    /* 🚫 REMOVER ÍCONE DE LINK NO TÍTULO (Comportamento padrão do Streamlit) */
+    a.header-anchor { display: none !important; }
+
     .block-container { padding-top: 3rem !important; padding-bottom: 6rem; max-width: 1400px !important;}
     .logo-box { text-align: center; width: 100%; margin-bottom: 20px; }
     .logo-box img { max-width: 250px; width: 70%; height: auto; }
     .main-title { text-align: center; font-weight: 800; font-size: 2rem; margin-bottom: 0; color: #f8fafc; }
     .status-text { text-align: center; font-size: 0.8rem; font-family: monospace; color: #9ca3af; margin-bottom: 30px; }
     
-    /* === BOTÃO FLUTUANTE (FIXO NO CANTO INFERIOR DIREITO) === */
+    /* === BOTÃO FLUTUANTE === */
     .floating-btn {
         position: fixed;
         bottom: 30px;
@@ -240,7 +241,7 @@ data, date_limit_str = load_filtered_data()
 # --- PESQUISA ---
 c_search_l, c_search_c, c_search_r = st.columns([1, 3, 1])
 with c_search_c:
-    st.write("Digite um nome, OAB ou CPF para buscar no acervo recente:")
+    st.write("Digite o termo que deseja buscar no acervo recente (ex: Nome, palavra-chave, OAB, Matrícula...):")
     with st.form(key='search_form'):
         col_in, col_btn = st.columns([4, 1], gap="small", vertical_alignment="bottom")
         with col_in: query = st.text_input(label="Busca", placeholder="O que você procura?", label_visibility="collapsed")
