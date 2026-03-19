@@ -11,11 +11,18 @@ import pytz
 import urllib3
 from urllib.parse import unquote
 
+# --- NOVOS IMPORTS PARA O E-MAIL ---
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+import csv
+import urllib.request
+
 # --- CONFIGURAÇÃO DE CAMINHOS ---
 current_dir = os.path.dirname(os.path.abspath(__file__))
 root_dir = os.path.dirname(current_dir)
 DB_FILE = os.path.join(root_dir, 'data', 'dados.json')
-STATUS_FILE = os.path.join(root_dir, 'data', 'status.json') # Novo arquivo de status
+STATUS_FILE = os.path.join(root_dir, 'data', 'status.json')
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 TARGET_URL = "https://diof.ro.gov.br"
@@ -66,10 +73,96 @@ def save_status():
     except Exception as e:
         print(f"Erro ao salvar status: {e}")
 
+# --- NOVA FUNÇÃO: VERIFICAR E ENVIAR ALERTAS ---
+def verificar_e_enviar_alertas(texto_do_pdf_novo, titulo_pdf, link_pdf):
+    LINK_PLANILHA_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTHg_b0ffTU4kup8hZkmXW4SFWPazoqYT0bt4PHlsnyBn5wO_82pb7bvuTY7YYwX3_k1RFWFHR4wYYz/pub?output=csv"
+    
+    gmail_user = os.environ.get('GMAIL_USER')
+    gmail_password = os.environ.get('GMAIL_PASSWORD')
+
+    if not gmail_user or not gmail_password:
+        print("⚠️ Credenciais de e-mail (GMAIL_USER ou GMAIL_PASSWORD) não configuradas no GitHub Secrets.")
+        return
+
+    try:
+        # Baixa os dados da planilha
+        resposta = urllib.request.urlopen(LINK_PLANILHA_CSV)
+        linhas = [l.decode('utf-8') for l in resposta.readlines()]
+        leitor_csv = csv.reader(linhas)
+        
+        cabecalho = next(leitor_csv, None) 
+        
+        usuarios_ativos = {}
+        
+        # Lê a planilha de cima para baixo. E-mails repetidos vão sobrescrever e manter só a resposta mais recente.
+        for linha in leitor_csv:
+            if len(linha) >= 6: 
+                nome = linha[1].strip()
+                email_usuario = linha[2].strip().lower()
+                termo = linha[5].strip()
+                
+                if email_usuario and termo:
+                    usuarios_ativos[email_usuario] = {
+                        'nome': nome,
+                        'termo': termo
+                    }
+        
+        if not usuarios_ativos:
+            print("Nenhum usuário cadastrado para alertas.")
+            return
+
+        # Verifica quem vai receber e-mail
+        emails_para_enviar = []
+        for email, dados in usuarios_ativos.items():
+            termo_busca = dados['termo'].lower()
+            if termo_busca in texto_do_pdf_novo.lower():
+                emails_para_enviar.append((email, dados['nome'], dados['termo']))
+
+        # Dispara os e-mails
+        if emails_para_enviar:
+            print(f"🔔 Encontramos {len(emails_para_enviar)} alertas para enviar!")
+            
+            server = smtplib.SMTP('smtp.gmail.com', 587)
+            server.starttls()
+            server.login(gmail_user, gmail_password)
+            
+            for email_destino, nome, termo in emails_para_enviar:
+                msg = MIMEMultipart()
+                msg['From'] = gmail_user
+                msg['To'] = email_destino
+                msg['Subject'] = f"🚨 Alerta DIOF-RO: Encontramos o termo '{termo}'"
+                
+                corpo_email = f"""Olá {nome},
+                
+Temos uma excelente notícia! O sistema do BT System acabou de encontrar uma correspondência para você.
+
+O termo "{termo}" que você cadastrou apareceu em uma nova edição do Diário Oficial de Rondônia.
+
+📄 Documento: {titulo_pdf}
+🔗 Link para acesso: {link_pdf}
+
+Dica: Ao abrir o PDF, aperte CTRL+F (ou busque na página no celular) e digite o seu termo para achá-lo rapidamente dentro do documento.
+
+Para alterar o seu termo de busca atual, basta preencher nosso formulário de cadastro novamente usando este mesmo e-mail.
+
+Atenciosamente,
+Robô de Alertas - BT System
+"""
+                msg.attach(MIMEText(corpo_email, 'plain'))
+                server.send_message(msg)
+                print(f"✅ E-mail enviado com sucesso para: {email_destino}")
+                
+            server.quit()
+        else:
+            print("Nenhum termo cadastrado foi encontrado neste PDF.")
+
+    except Exception as e:
+        print(f"❌ Erro ao processar ou enviar alertas: {e}")
+
+# --- CÓDIGO PRINCIPAL ---
 def main():
     session = get_session()
     
-    # Garante que a pasta existe
     os.makedirs(os.path.dirname(DB_FILE), exist_ok=True)
 
     if os.path.exists(DB_FILE):
@@ -87,7 +180,6 @@ def main():
         soup = BeautifulSoup(response.content, 'html.parser')
     except Exception as e:
         print(f"❌ Erro de acesso: {e}")
-        # Mesmo com erro, tentamos salvar o status para mostrar a hora da tentativa
         save_status() 
         return
 
@@ -105,9 +197,12 @@ def main():
     for item in reversed(links_on_page): 
         if item['url'] not in processed_urls:
             print(f"🚨 NOVO PDF: {item['title']}")
+            
+            # 1. Extrai o conteúdo em PDF
             pages_content = extract_pages_from_pdf(session, item['url'])
             
             if pages_content:
+                # 2. Salva no banco de dados
                 new_entry = {
                     "title": item['title'],
                     "url": item['url'],
@@ -117,6 +212,11 @@ def main():
                 database.insert(0, new_entry)
                 processed_urls.add(item['url'])
                 new_found = True
+                
+                # 3. GATILHO DOS ALERTAS: Junta o texto de todas as páginas e envia pro verificador
+                print(f"🔍 Verificando se há alertas configurados para {item['title']}...")
+                texto_completo = " ".join([page['text'] for page in pages_content])
+                verificar_e_enviar_alertas(texto_completo, item['title'], item['url'])
 
     if new_found:
         database = database[:50]
@@ -126,7 +226,6 @@ def main():
     else:
         print("zzz Sem novos PDFs.")
     
-    # SALVA O STATUS (SEMPRE)
     save_status()
 
 if __name__ == "__main__":
