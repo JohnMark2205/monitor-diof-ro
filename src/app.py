@@ -31,8 +31,8 @@ LOGO_PATH = os.path.join(root_dir, 'assets', 'logo_diof.png')
 # --- LINKS EXTERNOS ---
 CONTACT_FORM_URL = "https://forms.gle/ZyjbbLg47n6uVNAz9"
 
-# 🔴🔴🔴 ATENÇÃO: COLE AQUI O LINK DO SEU GOOGLE FORMS (Para o usuário responder) 🔴🔴🔴
-ALERT_FORM_URL = "https://forms.gle/SEU_LINK_DO_FORMULARIO_AQUI" 
+# ✅ SEU LINK OFICIAL INSERIDO AQUI
+ALERT_FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLSdeDFLj0NoYpT5HhwFisnSNeCxjE2d-9AueiRAH99Rt5PFuCQ/viewform?usp=header" 
 
 # --- CSS VISUAL (V36 - BOTÃO FLUTUANTE) ---
 st.markdown("""
